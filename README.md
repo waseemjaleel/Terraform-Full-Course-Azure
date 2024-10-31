@@ -21,16 +21,16 @@ This course consists of video lessons covering basic to advanced Terraform conce
 ### Module 1: Core Concepts
 
 #### Video 1: Introduction to Terraform
-- What is Terraform and its benefits
 - Understanding Infrastructure as Code (IaC)
+- Why we need IaC
+- What is Terraform and its benefits
+- Challenges with the traditional approach
 - Terraform Workflow
-- Installing Terraform
+- Terraform Providers
 - [Code Sample](/lessons/01-introduction/)
 
 #### Video 2: Terraform Provider
-- Understanding providers
-- Provider configuration
-- Provider versions
+- Installing Terraform
 - [Code Sample](/lessons/02-terraform-provider/)
 
 #### Video 3: Resource Group and Storage Account
