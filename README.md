@@ -26,21 +26,28 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - What is Terraform and its benefits
 - Challenges with the traditional approach
 - Terraform Workflow
-- Terraform Providers
+- Installing Terraform
 - [Code Sample](/lessons/01-introduction/)
 
 #### Video 2: Terraform Provider
-- Installing Terraform
+- Terraform Providers
+- Provider version v/s Terraform core version
+- Why version matters
+- Version constraints
+- Operators for versions
 - [Code Sample](/lessons/02-terraform-provider/)
 
 #### Video 3: Resource Group and Storage Account
+- Authentication and Authorization to Azure resources
 - Creating resource groups
 - Storage account management
 - Understanding dependencies
 - [Code Sample](/lessons/03-resource-storage/)
 
 #### Video 4: Backend Configuration
+- How Terraform updates Infra
 - Terraform state file
+- State file best practices
 - Remote backend setup
 - State management
 - [Code Sample](/lessons/04-backend-config/)
