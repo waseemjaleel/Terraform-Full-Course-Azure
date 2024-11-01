@@ -52,39 +52,41 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - State management
 - [Code Sample](/lessons/04-backend-config/)
 
-#### Day5: File Structure
+#### Day5: Variables
+- Input variables
+- Output variables
+- Variable files (tfvars)
+- [Code Sample](/lessons/5-variables/)
+
+#### Day6: File Structure
 - Terraform file organization
+- Sequence of file loading
 - Best practices for structure
 - [Code Sample](/lessons/05-file-structure/)
 
-#### Video 6: Data Structures in Terraform
+#### Video 7: Data Structures in Terraform
 - String, number, bol
 - Map, set, list, null
 - Locals
 - Dynamic blocks
 - [Code Sample](/lessons/06-data-structures/)
 
-#### Video 7: For Each Loop
+#### Video 8: For Each Loop
 - Understanding for_each
 - Practical examples
 - [Code Sample](/lessons/07-for-each/)
 
-#### Video 8: Data Sources
+#### Video 9: Data Sources
 - Using data sources
 - Practical examples
 - [Code Sample](/lessons/08-data-sources/)
 
-#### Video 9: Functions and Conditional Expressions
+#### Video 10: Functions and Conditional Expressions
 - Built-in functions
 - Conditional expressions
 - Splat Expressions
 - [Code Sample](/lessons/9-functions-conditions/)
 
-#### Video 10: Variables
-- Input variables
-- Output variables
-- Variable files (tfvars)
-- [Code Sample](/lessons/10-variables/)
 
 ### Module 2: Azure resources using Terraform
 
@@ -95,7 +97,7 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - [Code Sample](/lessons/11-compute/)
 
 #### Video 12: VNET and Peering
-- Virtual Network creation
+- Virtual Network Creation
 - VNet peering setup
 - [Code Sample](/lessons/12-networking/)
 
@@ -118,7 +120,7 @@ This course consists of video lessons covering basic to advanced Terraform conce
 
 #### Video 16: AKS Cluster
 - Kubernetes cluster setup
-- Custom modules usage
+- Custom module usage
 - [Code Sample](/lessons/16-aks/)
 
 #### Video 17: Load Balancer and Traffic Manager
@@ -143,7 +145,7 @@ This course consists of video lessons covering basic to advanced Terraform conce
 
 #### Video 21: Azure Monitoring
 - Metrics alerts
-- Action groups
+- Action Groups
 - Log analytics workspace
 - Log alerts
 - [Code Sample](/lessons/21-monitoring/)
