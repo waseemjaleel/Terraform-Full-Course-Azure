@@ -6,11 +6,11 @@ Welcome to the comprehensive Terraform with Azure video course! This repository 
 This course consists of video lessons covering basic to advanced Terraform concepts with Azure cloud, including hands-on projects and real-world scenarios.
 
 ## 📋 Prerequisites
-- Azure free account or subscription , follow this [video](https://youtu.be/bv3CWyaUeJI)
+- Azure free account or subscription, follow this [video](https://youtu.be/bv3CWyaUeJI)
 - Azure Fundamentals [Video Link](https://youtu.be/-pX5PjIYTJs)
 - Visual Studio Code or preferred IDE
-- Git installed and working knowlege of it
-- Linux or Mac or WSL(Windows Sub-system for Linux)
+- Git installed and working knowledge of it
+- Linux or Mac or WSL(Windows Subsystem for Linux)
 - Linux and Shell scripting
 - Basic understanding of YAML and JSON
 - Networking Fundamentals
@@ -20,7 +20,7 @@ This course consists of video lessons covering basic to advanced Terraform conce
 
 ### Module 1: Core Concepts
 
-#### Video 1: Introduction to Terraform
+#### Day1: Introduction to Terraform
 - Understanding Infrastructure as Code (IaC)
 - Why we need IaC
 - What is Terraform and its benefits
@@ -29,7 +29,7 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - Installing Terraform
 - [Code Sample](/lessons/01-introduction/)
 
-#### Video 2: Terraform Provider
+#### Day2: Terraform Provider
 - Terraform Providers
 - Provider version v/s Terraform core version
 - Why version matters
@@ -37,14 +37,14 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - Operators for versions
 - [Code Sample](/lessons/02-terraform-provider/)
 
-#### Video 3: Resource Group and Storage Account
+#### Day3: Resource Group and Storage Account
 - Authentication and Authorization to Azure resources
 - Creating resource groups
 - Storage account management
 - Understanding dependencies
 - [Code Sample](/lessons/03-resource-storage/)
 
-#### Video 4: Backend Configuration
+#### Day4: Backend Configuration
 - How Terraform updates Infra
 - Terraform state file
 - State file best practices
@@ -52,7 +52,7 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - State management
 - [Code Sample](/lessons/04-backend-config/)
 
-#### Video 5: File Structure
+#### Day5: File Structure
 - Terraform file organization
 - Best practices for structure
 - [Code Sample](/lessons/05-file-structure/)
@@ -64,7 +64,7 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - Dynamic blocks
 - [Code Sample](/lessons/06-data-structures/)
 
-#### Video 7: For Each Loops
+#### Video 7: For Each Loop
 - Understanding for_each
 - Practical examples
 - [Code Sample](/lessons/07-for-each/)
