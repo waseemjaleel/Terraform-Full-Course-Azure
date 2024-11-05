@@ -14,6 +14,7 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - Linux and Shell scripting
 - Basic understanding of YAML and JSON
 - Networking Fundamentals
+- IP Addressing [Video Link](https://youtu.be/G1azmL5-eQI)
 - Docker and Kubernetes Fundamentals [Playlist Link](https://www.youtube.com/playlist?list=PLl4APkPHzsUUOkOv3i62UidrLmSB8DcGC)
 
 ## 📚 Course Curriculum
