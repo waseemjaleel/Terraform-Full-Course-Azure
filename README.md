@@ -56,6 +56,7 @@ This course consists of video lessons covering basic to advanced Terraform conce
 #### Day5: Variables
 - Input variables
 - Output variables
+- Locals
 - Variable files (tfvars)
 - [Code Sample](/lessons/5-variables/)
 
@@ -65,24 +66,37 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - Best practices for structure
 - [Code Sample](/lessons/05-file-structure/)
 
-#### Video 7: Data Structures in Terraform
+#### Video 7: Type constraints in Terraform
 - String, number, bol
 - Map, set, list, null
 - Locals
-- Dynamic blocks
 - [Code Sample](/lessons/06-data-structures/)
 
 #### Video 8: For Each Loop
-- Understanding for_each
+- Understanding count
+- for_each loop
+- for loop
 - Practical examples
 - [Code Sample](/lessons/07-for-each/)
 
-#### Video 9: Data Sources
+#### Video 9: Dynamic Blocks
+- Dynamic blocks
+- practical examples
+- Code samples
+
+#### Video 10: The Lifecycle meta-arguments
+- create before destroy
+- prevent destroy
+- ignore changes
+- replace triggered by
+- customer condition
+
+#### Video 11: Data Sources
 - Using data sources
 - Practical examples
 - [Code Sample](/lessons/08-data-sources/)
 
-#### Video 10: Functions and Conditional Expressions
+#### Video 12: Functions and Conditional Expressions
 - Built-in functions
 - Conditional expressions
 - Splat Expressions
@@ -91,60 +105,62 @@ This course consists of video lessons covering basic to advanced Terraform conce
 
 ### Module 2: Azure resources using Terraform
 
-#### Video 11: VM, VMSS, NSG
+#### Video 13: VM, VMSS, NSG
 - Creating Virtual Machines
 - VM Scale Sets
 - Network Security Groups
 - [Code Sample](/lessons/11-compute/)
 
-#### Video 12: VNET and Peering
+#### Video 14: VNET and Peering
 - Virtual Network Creation
 - VNet peering setup
 - [Code Sample](/lessons/12-networking/)
 
-#### Video 13: Azure AD Authentication
+#### Video 15: Azure AD Authentication
 - Authentication methods
 - Service principals
 - Managed identities
 - [Code Sample](/lessons/13-auth/)
 
-#### Video 14: Azure Web Apps
+#### Video 16: Azure Web Apps
 - App Service creation
 - Configuration
 - Deployment
 - [Code Sample](/lessons/14-webapps/)
 
-#### Video 15: Azure Functions
+#### Video 17: Azure Functions
 - Function App setup
 - Configuration
 - [Code Sample](/lessons/15-functions/)
 
-#### Video 16: AKS Cluster
+#### Video 18: AKS Cluster
 - Kubernetes cluster setup
 - Custom module usage
+- Git clone integration
+- kubectl implementation
 - [Code Sample](/lessons/16-aks/)
 
-#### Video 17: Load Balancer and Traffic Manager
+#### Video 19: Load Balancer and Traffic Manager
 - Load balancer setup
 - Traffic manager configuration
 - [Code Sample](/lessons/17-loadbalancer/)
 
-#### Video 18: Azure Policy and Governance
+#### Video 20: Azure Policy and Governance
 - Policy creation
 - Governance setup
 - [Code Sample](/lessons/18-policy/)
 
-#### Video 19: Azure App Gateway
+#### Video 21: Azure App Gateway
 - App Gateway setup
 - Configuration
 - [Code Sample](/lessons/19-appgateway/)
 
-#### Video 20: Azure SQL Database
+#### Video 22: Azure SQL Database
 - Database creation
 - Configuration
 - [Code Sample](/lessons/20-sql/)
 
-#### Video 21: Azure Monitoring
+#### Video 23: Azure Monitoring
 - Metrics alerts
 - Action Groups
 - Log analytics workspace
@@ -153,43 +169,36 @@ This course consists of video lessons covering basic to advanced Terraform conce
 
 ### Module 3: Advanced Concepts
 
-#### Video 22: Terraform Modules (Project 1)
+#### Video 24: Terraform Modules (Project 1)
 - Public modules
 - Custom modules
 - Creating and publishing modules
 - [Project Files](/projects/01-modules/)
 
-#### Video 23: Terraform Cloud and Workspaces
+#### Video 25: Terraform Cloud and Workspaces
 - Cloud setup
 - Workspace management
 - [Code Sample](/lessons/23-terraform-cloud/)
 
-#### Video 24: Azure DevOps with Terraform (Project 2)
+#### Video 26: Azure DevOps with Terraform (Project 2)
 - CI/CD pipeline setup
 - Automation
 - [Project Files](/projects/02-devops/)
 
-#### Video 25: 3-Tier Architecture (Project 3)
+#### Video 27: 3-Tier Architecture (Project 3)
 - Complete architecture setup
 - Best practices
 - [Project Files](/projects/03-three-tier/)
 
-#### Video 26: AKS Upgrade with Zero Downtime (Project 4)
+#### Video 28: AKS Upgrade with Zero Downtime (Project 4)
 - Upgrade strategy
 - Implementation
 - [Project Files](/projects/04-aks-upgrade/)
 
-#### Video 27: Best Practices
-- Code organization
-- Security practices
-- Performance optimization
-- [Code Sample](/lessons/29-best-practices/)
 
-#### Video 28: Advanced Deployment
+#### Video 29: Miss. topics
 - Using provisioners
-- Git clone integration
-- kubectl implementation
-- [Code Sample](/lessons/28-advanced-deployment/)
+- [Code Sample](/lessons/28-miss-topics/)
 
 ## 📂 Repository Structure
 ```
