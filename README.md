@@ -72,29 +72,29 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - Locals
 - [Code Sample](/lessons/06-data-structures/)
 
-#### Video 8: For Each Loop
+#### Video 8: Meta-arguments
 - Understanding count
 - for_each loop
 - for loop
 - Practical examples
 - [Code Sample](/lessons/07-for-each/)
 
-#### Video 9: Dynamic Blocks
-- Dynamic blocks
-- practical examples
-- Code samples
-
-#### Video 10: The Lifecycle meta-arguments
+#### Video 9: The Lifecycle meta-arguments
 - create before destroy
 - prevent destroy
 - ignore changes
 - replace triggered by
 - customer condition
 
+#### Video 10: Dynamic Blocks
+- Dynamic blocks
+- practical examples
+- Code samples
+
 #### Video 11: Data Sources
 - Using data sources
 - Practical examples
-- [Code Sample](/lessons/08-data-sources/)
+- [Code Sample](/lessons/11-data-sources/)
 
 #### Video 12: Functions and Conditional Expressions
 - Built-in functions
