@@ -86,8 +86,10 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - replace triggered by
 - customer condition
 
-#### Video 10: Dynamic Blocks
+#### Video 10: Dynamic Blocks and expressions
 - Dynamic blocks
+- Conditional expressions
+- Splat Expressions
 - practical examples
 - Code samples
 
@@ -98,8 +100,6 @@ This course consists of video lessons covering basic to advanced Terraform conce
 
 #### Video 12: Functions and Conditional Expressions
 - Built-in functions
-- Conditional expressions
-- Splat Expressions
 - [Code Sample](/lessons/9-functions-conditions/)
 
 
