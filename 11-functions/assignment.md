@@ -79,7 +79,7 @@ Azure storage account names must be less than 24 characters and use only lowerca
 
 **Input**:
 ```
-"projectalphastorageaccount"
+"hello this is a DUMMY!! storage account with greater than 24 character"
 ```
 
 **Requirements**:
@@ -109,7 +109,7 @@ Transform a comma-separated list of ports into a specific format for documentati
 
 **Required Output**:
 ```
-"port-80-port-443-port-8080-port-3306"
+"port-80, port-443, port-3306"
 ```
 
 **Tasks**:
@@ -129,16 +129,11 @@ Implement environment configuration mapping with fallback values.
 
 **Input**:
 ```hcl
-environments = {
-    dev = {
-        instance_size = "small"
-        redundancy    = "low"
-    }
-    prod = {
-        instance_size = "large"
-        redundancy    = "high"
-    }
-}
+
+    dev     = "standard_D2s_v3"
+    staging = "standard_D4s_v3"
+    prod    = "standard_D8s_v3"
+
 ```
 
 **Tasks**:
