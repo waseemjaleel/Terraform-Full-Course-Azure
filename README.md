@@ -93,16 +93,18 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - practical examples
 - Code samples
 
-#### Video 11: Data Sources
+#### Video 11: Functions in Terraform
+- Built-in functions
+- Practical examples
+- tasks for practise
+- [Code Sample](/lessons/11-functions-conditions/)
+
+
+#### Video 12: Data Sources
 - Using data sources
 - Practical examples
-- [Code Sample](/lessons/11-data-sources/)
-
-#### Video 12: Functions and Conditional Expressions
-- Built-in functions
-- [Code Sample](/lessons/9-functions-conditions/)
-
-
+- [Code Sample](/lessons/12-data-sources/)
+  
 ### Module 2: Azure resources using Terraform
 
 #### Video 13: VM, VMSS, NSG
