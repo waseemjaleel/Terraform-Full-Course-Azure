@@ -96,56 +96,58 @@ This course consists of video lessons covering basic to advanced Terraform conce
 #### Video 11: Functions in Terraform
 - Built-in functions
 - Practical examples
-- tasks for practise
+- tasks for practice
 - [Code Sample](/lessons/11-functions-conditions/)
 
 
-#### Video 12: Data Sources
+#### Video 12: Functions in Terraform(Continue..)
+- Built-in functions
+- Practical examples
+- tasks for practice
+- [Code Sample](/lessons/12-functions-conditions/)
+
+#### Video 13: Data Sources
 - Using data sources
 - Practical examples
 - [Code Sample](/lessons/12-data-sources/)
   
-### Module 2: Azure resources using Terraform
+### Module 2: Azure resources using Terraform (Mini-Projects)
 
-#### Video 13: VM, VMSS, NSG
+#### Video 14: High available/scalable Infrastructure Deployment
 - Creating Virtual Machines
 - VM Scale Sets
 - Network Security Groups
+- Loadbalancer, Nat Gateway, Public IP , Autoscaling rules etc
 - [Code Sample](/lessons/11-compute/)
 
-#### Video 14: VNET and Peering
+#### Video 15: VNET and Peering
 - Virtual Network Creation
 - VNet peering setup
 - [Code Sample](/lessons/12-networking/)
 
-#### Video 15: Azure AD Authentication
+#### Video 16: Azure AD Authentication
 - Authentication methods
 - Service principals
 - Managed identities
 - [Code Sample](/lessons/13-auth/)
 
-#### Video 16: Azure Web Apps
+#### Video 17: Azure Web Apps
 - App Service creation
 - Configuration
 - Deployment
 - [Code Sample](/lessons/14-webapps/)
 
-#### Video 17: Azure Functions
+#### Video 18: Azure Functions
 - Function App setup
 - Configuration
 - [Code Sample](/lessons/15-functions/)
 
-#### Video 18: AKS Cluster
+#### Video 19: AKS Cluster
 - Kubernetes cluster setup
 - Custom module usage
 - Git clone integration
 - kubectl implementation
 - [Code Sample](/lessons/16-aks/)
-
-#### Video 19: Load Balancer and Traffic Manager
-- Load balancer setup
-- Traffic manager configuration
-- [Code Sample](/lessons/17-loadbalancer/)
 
 #### Video 20: Azure Policy and Governance
 - Policy creation
