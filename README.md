@@ -210,10 +210,10 @@ This course consists of video lessons covering basic to advanced Terraform conce
 │   ├── 02-terraform-provider/
 │   └── ...
 ├── projects/
-│   ├── 01-modules/
-│   ├── 02-devops/
-│   ├── 03-three-tier/
-│   └── 05-cloud-infra/
+│   ├── 14-vmss/
+│   ├── 15-vnetpeering/
+│   ├── 16-azuread
+│   └── 17-webapp
 ├── docs/
 │   ├── setup.md
 │   └── troubleshooting.md
