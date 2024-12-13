@@ -49,25 +49,27 @@ That's not it
 - Easy to create an identical production environment for troubleshooting
 
 
-# What is Terraform
+## What is Terraform
 IaaC tool that helps do all these tasks
 
 <img width="658" alt="image" src="https://github.com/user-attachments/assets/5f090225-fb4b-4022-bf7e-248343d7d5cb" />
 
 
-# How it works
+## How it works
 Write your terraform files --> Run terraform commands --> Call the target cloud provider API to provision the infra using Terraform Provider
 
 <img width="775" alt="image" src="https://github.com/user-attachments/assets/d75208b8-5a1f-4f18-8743-7fc8930c6106" />
 
 Phases: init --> validate --> plan --> apply --> destroy
 
-# Install Terraform
+## Task for Day02 
+
+### Install Terraform
 
 ```bash
 https://developer.hashicorp.com/terraform/install
 ```
-# Common Error
+### Common Error
 
 ```
 brew install hashicorp/tap/terraform
@@ -77,7 +79,7 @@ Install the Command Line Tools:
 ```
 - Install the code tool for mac --> popup will appear, install using that
 
-# Use below commands
+### Use below commands
 
 ```bash
 terraform -install-autocomplete
