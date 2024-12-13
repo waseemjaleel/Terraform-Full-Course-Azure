@@ -1,5 +1,6 @@
 # Terraform Functions Learning Guide - Assignments
 
+
 ## Console Commands
 
 Practice these fundamental commands in `terraform console` before starting the assignments:
@@ -51,7 +52,7 @@ You need to combine default company tags with environment-specific tags.
 ```hcl
 # Default tags
 {
-    company    = "CloudOps"
+    company    = "TechCorp"
     managed_by = "terraform"
 }
 
@@ -79,7 +80,7 @@ Azure storage account names must be less than 24 characters and use only lowerca
 
 **Input**:
 ```
-"hello this is a DUMMY!! storage account with greater than 24 character"
+"projectalphastorageaccount"
 ```
 
 **Requirements**:
@@ -109,7 +110,7 @@ Transform a comma-separated list of ports into a specific format for documentati
 
 **Required Output**:
 ```
-"port-80, port-443, port-3306"
+"port-80-port-443-port-8080-port-3306"
 ```
 
 **Tasks**:
@@ -129,11 +130,16 @@ Implement environment configuration mapping with fallback values.
 
 **Input**:
 ```hcl
-
-    dev     = "standard_D2s_v3"
-    staging = "standard_D4s_v3"
-    prod    = "standard_D8s_v3"
-
+environments = {
+    dev = {
+        instance_size = "small"
+        redundancy    = "low"
+    }
+    prod = {
+        instance_size = "large"
+        redundancy    = "high"
+    }
+}
 ```
 
 **Tasks**:
