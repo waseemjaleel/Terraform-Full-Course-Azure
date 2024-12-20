@@ -45,7 +45,7 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - Understanding dependencies
 - [Code Sample](/lessons/day03/)
 
-#### Day4: Backend Configuration
+#### Day4: State file management - Remote Backend
 - How Terraform updates Infra
 - Terraform state file
 - State file best practices
