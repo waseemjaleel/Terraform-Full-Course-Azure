@@ -28,7 +28,7 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - Challenges with the traditional approach
 - Terraform Workflow
 - Installing Terraform
-- [Code Sample](/lessons/01-introduction/)
+- [Code Sample](/lessons/day01/)
 
 #### Day2: Terraform Provider
 - Terraform Providers
@@ -36,14 +36,14 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - Why version matters
 - Version constraints
 - Operators for versions
-- [Code Sample](/lessons/02-terraform-provider/)
+- [Code Sample](/lessons/day02/)
 
 #### Day3: Resource Group and Storage Account
 - Authentication and Authorization to Azure resources
 - Creating resource groups
 - Storage account management
 - Understanding dependencies
-- [Code Sample](/lessons/03-resource-storage/)
+- [Code Sample](/lessons/day03/)
 
 #### Day4: Backend Configuration
 - How Terraform updates Infra
