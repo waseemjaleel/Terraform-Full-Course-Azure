@@ -69,9 +69,8 @@ This course consists of video lessons covering basic to advanced Terraform conce
 
 #### Video 7: Type constraints in Terraform
 - String, number, bol
-- Map, set, list, null
-- Locals
-- [Code Sample](/lessons/06-data-structures/)
+- Map, set, list, Tuple, Objects
+- [Code Sample](/lessons/day07/)
 
 #### Video 8: Meta-arguments
 - Understanding count
