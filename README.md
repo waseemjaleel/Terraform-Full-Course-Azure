@@ -51,20 +51,21 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - State file best practices
 - Remote backend setup
 - State management
-- [Code Sample](/lessons/04-backend-config/)
+- [Code Sample](/lessons/day04/)
 
 #### Day5: Variables
 - Input variables
 - Output variables
 - Locals
+- Variable precedence
 - Variable files (tfvars)
-- [Code Sample](/lessons/5-variables/)
+- [Code Sample](/lessons/day05/)
 
 #### Day6: File Structure
 - Terraform file organization
 - Sequence of file loading
 - Best practices for structure
-- [Code Sample](/lessons/05-file-structure/)
+- [Code Sample](/lessons/day06/)
 
 #### Video 7: Type constraints in Terraform
 - String, number, bol
