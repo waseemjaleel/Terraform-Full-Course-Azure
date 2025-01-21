@@ -15,7 +15,7 @@ https://registry.terraform.io/providers/hashicorp/azuread/latest/docs/data-sourc
 
 - Create a csv file for the Active directory users using the below sample data
   ```csv
-  first_name,last_name,department,job_title
+first_name,last_name,department,job_title
 Michael,Scott,Education,Manager
 Jim,Halpert,Education,Engineer
 Pam,Beesly,Education,Engineer
