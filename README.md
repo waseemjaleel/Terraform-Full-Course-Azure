@@ -77,7 +77,7 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - for_each loop
 - for loop
 - Practical examples
-- [Code Sample](/lessons/07-for-each/)
+- [Code Sample](/lessons/day08)
 
 #### Video 9: The Lifecycle meta-arguments
 - create before destroy
@@ -85,31 +85,32 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - ignore changes
 - replace triggered by
 - customer condition
+- [Code Sample](/lessons/day09)
 
 #### Video 10: Dynamic Blocks and expressions
 - Dynamic blocks
 - Conditional expressions
 - Splat Expressions
 - practical examples
-- Code samples
+- [Code Sample](/lessons/day10)
 
 #### Video 11: Functions in Terraform
 - Built-in functions
 - Practical examples
 - tasks for practice
-- [Code Sample](/lessons/11-functions-conditions/)
+- [Code Sample](/lessons/day11)
 
 
 #### Video 12: Functions in Terraform(Continue..)
 - Built-in functions
 - Practical examples
 - tasks for practice
-- [Code Sample](/lessons/12-functions-conditions/)
+- [Code Sample](/lessons/day12)
 
 #### Video 13: Data Sources
 - Using data sources
 - Practical examples
-- [Code Sample](/lessons/13-data-sources/)
+- [Code Sample](/lessons/day13)
   
 ### Module 2: Azure resources using Terraform 
 
@@ -118,59 +119,59 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - VM Scale Sets
 - Network Security Groups
 - Loadbalancer, Nat Gateway, Public IP , Autoscaling rules etc
-- [Code Sample](/lessons/14-compute/)
+- [Code Sample](/lessons/day14)
 
 #### Video 15: VNET and Peering ( Mini Project 2 )
 - Virtual Network Creation
 - VNet peering setup
-- [Code Sample](/lessons/15-networking/)
+- [Code Sample](/lessons/day15)
 
 #### Video 16: Azure AD Authentication ( Mini Project 3 )
 - Authentication methods
 - Service principals
 - Managed identities
-- [Code Sample](/lessons/16-auth/)
+- [Code Sample](/lessons/day16)
 
 #### Video 17: Azure Web Apps ( Mini Project 4 )
 - App Service creation
 - Configuration
 - Deployment
-- [Code Sample](/lessons/17-webapps/)
+- [Code Sample](/lessons/day17)
 
 #### Video 18: Azure Functions ( Mini Project 5 )
 - Function App setup
 - Configuration
-- [Code Sample](/lessons/15-functions/)
+- [Code Sample](/lessons/day18)
 
 #### Video 19: Terraform Provisioners ( Mini Project 6 )
 - What are provisioners and their use case
 - Local vs remote vs file provisioners
 - Demo of all three provisioners
-- [Code Sample](/lessons/28-miss-topics/)
+- [Code Sample](/lessons/day19)
 
 #### Video 20: AKS Cluster ( Real-time Project 1)
 - Kubernetes cluster setup
 - Custom module usage
 - Custom module creation for AKS, KeyVault, SPN etc
-- [Code Sample](/lessons/20-aks/)
+- [Code Sample](/lessons/day20)
 
 #### Video 21: Azure Policy and Governance ( Mini Project 7 )
 - Policy creation
 - Governance setup
-- [Code Sample](/lessons/21-policy/)
+- [Code Sample](/lessons/day21)
 
 
 #### Video 22: Azure SQL Database ( Mini Project 8 )
 - Database creation
 - Configuration
-- [Code Sample](/lessons/22-sql/)
+- [Code Sample](/lessons/day22)
 
 #### Video 23: Azure Monitoring ( Mini Project 9 )
 - Metrics alerts
 - Action Groups
 - Log analytics workspace
 - Log alerts
-- [Code Sample](/lessons/23-monitoring/)
+- [Code Sample](/lessons/day23)
 
 ### Module 3: Advanced Concepts
 
@@ -178,27 +179,27 @@ This course consists of video lessons covering basic to advanced Terraform conce
 - Public modules
 - Custom modules
 - Creating and publishing modules
-- [Project Files](/projects/24-modules/)
+- [Code Sample](/lessons/day24)
 
 #### Video 25: Terraform Cloud and Workspaces
 - Cloud setup
 - Workspace management
-- [Code Sample](/lessons/25-terraform-cloud/)
+- [Code Sample](/lessons/day25)
 
 #### Video 26: Azure DevOps with Terraform (Real-time project 3)
 - CI/CD pipeline setup
 - Automation
-- [Project Files](/projects/26-devops/)
+- [Code Sample](/lessons/day26)
 
 #### Video 27: 3-Tier Architecture (Real-time project 4)
 - Complete architecture setup
 - Best practices
-- [Project Files](/projects/27-three-tier/)
+- [Code Sample](/lessons/day27)
 
 #### Video 28: AKS Upgrade with Zero Downtime (Real-time project 5)
 - Upgrade strategy
 - Implementation
-- [Project Files](/projects/28-aks-upgrade/)
+- [Code Sample](/lessons/day28)
 
 
 
@@ -206,14 +207,9 @@ This course consists of video lessons covering basic to advanced Terraform conce
 ## 📂 Repository Structure
 ```
 ├── lessons/
-│   ├── 01-introduction/
-│   ├── 02-terraform-provider/
+│   ├── day01/
+│   ├── day02/
 │   └── ...
-├── projects/
-│   ├── 14-vmss/
-│   ├── 15-vnetpeering/
-│   ├── 16-azuread
-│   └── 17-webapp
 ├── docs/
 │   ├── setup.md
 │   └── troubleshooting.md
