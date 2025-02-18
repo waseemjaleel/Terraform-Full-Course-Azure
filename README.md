@@ -175,10 +175,13 @@ This course consists of video lessons covering basic to advanced Terraform conce
 
 ### Module 3: Advanced Concepts
 
-#### Video 24: Terraform Modules (Real-time project 2)
-- Public modules
-- Custom modules
-- Creating and publishing modules
+#### Video 24: Terraform Import (Real-time project 2)
+- Different ways of importing Azure resource to Terraform
+- Terraform Import
+- Importing a live website to Terraform using Terraform Import
+- AZExport
+- Importing a live website to Terraform using AZExport
+- Terraformer
 - [Code Sample](/lessons/day24)
 
 #### Video 25: Terraform Cloud and Workspaces
