@@ -35,6 +35,7 @@ resource "azurerm_postgresql_flexible_server" "primary" {
 
   high_availability {
     mode = "ZoneRedundant"
+    standby_availability_zone = "2"
   }
 
   maintenance_window {

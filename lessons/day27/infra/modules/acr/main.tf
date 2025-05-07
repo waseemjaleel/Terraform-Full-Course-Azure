@@ -36,7 +36,7 @@ resource "azurerm_container_registry" "acr" {
   network_rule_bypass_option = "AzureServices"
 
   network_rule_set {
-    default_action = "Deny"
+    default_action = "Allow"
 
     # Uncomment and customize if you want to allow specific IPs
     # ip_rule {

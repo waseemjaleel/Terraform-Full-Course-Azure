@@ -7,7 +7,7 @@ variable "environment" {
 variable "location" {
   description = "Azure region for resources"
   type        = string
-  default     = "eastus2"
+  default     = "eastus3"
 }
 
 variable "secondary_location" {
@@ -53,6 +53,12 @@ variable "bastion_subnet_prefix" {
   default     = "10.0.7.0/24"
 }
 
+variable "appgw_subnet_prefix" {
+  description = "Address prefix for Application Gateway subnet"
+  type        = string
+  default     = "10.0.8.0/24"
+}
+
 # Compute variables
 variable "frontend_vm_size" {
   description = "VM size for frontend instances"
@@ -82,6 +88,12 @@ variable "admin_username" {
   description = "Admin username for VMs"
   type        = string
   default     = "adminuser"
+}
+
+variable "deploy_compute" {
+  description = "Whether to deploy compute resources (VMSS). Set to false for initial infrastructure deployment."
+  type        = bool
+  default     = true
 }
 
 # Database variables

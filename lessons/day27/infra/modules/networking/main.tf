@@ -42,7 +42,7 @@ resource "azurerm_subnet" "database" {
   resource_group_name  = var.resource_group_name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = [var.database_subnet_prefixes[count.index]]
-  
+
   # Required delegation for PostgreSQL Flexible Server VNet integration
   delegation {
     name = "fs"
@@ -61,6 +61,14 @@ resource "azurerm_subnet" "bastion" {
   resource_group_name  = var.resource_group_name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = [var.bastion_subnet_prefix]
+}
+
+# Application Gateway Subnet
+resource "azurerm_subnet" "appgw" {
+  name                 = "${var.resource_name_prefix}-appgw-subnet"
+  resource_group_name  = var.resource_group_name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = [var.appgw_subnet_prefix]
 }
 
 # Public Subnet NSG
@@ -91,6 +99,17 @@ resource "azurerm_network_security_group" "public" {
     source_port_range          = "*"
     destination_port_range     = "443"
     source_address_prefix      = "Internet"
+    destination_address_prefix = "*"
+  }
+  security_rule {
+    name                       = "AllowAppGwV2Inbound"
+    priority                   = 120
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_ranges    = ["65200-65535"]
+    source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
 

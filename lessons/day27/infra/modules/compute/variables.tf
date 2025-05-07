@@ -18,6 +18,12 @@ variable "subnet_id" {
   type        = string
 }
 
+variable "appgw_subnet_id" {
+  description = "ID of the subnet for Application Gateway (frontend only)"
+  type        = string
+  default     = null
+}
+
 variable "vm_size" {
   description = "Size of the VM instances"
   type        = string
@@ -89,6 +95,6 @@ variable "database_connection" {
     dbname   = string
     sslmode  = string
   })
-  default     = null
-  sensitive   = true
+  default   = null
+  sensitive = true
 }

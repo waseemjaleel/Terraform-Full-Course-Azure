@@ -47,3 +47,8 @@ output "bastion_host_name" {
   description = "Name of the Bastion Host"
   value       = azurerm_bastion_host.main.name
 }
+
+output "appgw_subnet_id" {
+  description = "ID of the Application Gateway subnet"
+  value       = azurerm_subnet.appgw.id
+}

@@ -28,6 +28,7 @@ module "networking" {
   private_subnet_prefixes  = var.private_subnet_prefixes
   database_subnet_prefixes = var.database_subnet_prefixes
   bastion_subnet_prefix    = var.bastion_subnet_prefix
+  appgw_subnet_prefix      = var.appgw_subnet_prefix
   tags                     = local.common_tags
 }
 
@@ -53,8 +54,40 @@ module "keyvault" {
   object_id            = data.azurerm_client_config.current.object_id
   tags                 = local.common_tags
 
-
   depends_on = [module.database]
+}
+
+# After Key Vault is created, store database credentials as secrets
+resource "azurerm_key_vault_secret" "db_host" {
+  name         = "db-host"
+  value        = module.database.server_fqdn
+  key_vault_id = module.keyvault.key_vault_id
+
+  depends_on = [module.keyvault, module.database]
+}
+
+resource "azurerm_key_vault_secret" "db_username" {
+  name         = "db-username"
+  value        = module.database.administrator_login
+  key_vault_id = module.keyvault.key_vault_id
+
+  depends_on = [module.keyvault, module.database]
+}
+
+resource "azurerm_key_vault_secret" "db_password" {
+  name         = "db-password"
+  value        = module.database.administrator_password
+  key_vault_id = module.keyvault.key_vault_id
+
+  depends_on = [module.keyvault, module.database]
+}
+
+resource "azurerm_key_vault_secret" "db_name" {
+  name         = "db-name"
+  value        = var.postgres_db_name
+  key_vault_id = module.keyvault.key_vault_id
+
+  depends_on = [module.keyvault]
 }
 
 # Database
@@ -86,12 +119,14 @@ module "dns" {
 
 # Compute - Frontend VMSS
 module "frontend" {
+  count  = var.deploy_compute ? 1 : 0
   source = "./modules/compute"
 
   resource_group_name  = azurerm_resource_group.main.name
   location             = var.location
   resource_name_prefix = local.resource_name_prefix
   subnet_id            = module.networking.public_subnet_ids[0]
+  appgw_subnet_id      = module.networking.appgw_subnet_id
   vm_size              = var.frontend_vm_size
   instance_count       = var.frontend_instances
   admin_username       = var.admin_username
@@ -110,6 +145,7 @@ module "frontend" {
 
 # Compute - Backend VMSS
 module "backend" {
+  count  = var.deploy_compute ? 1 : 0
   source = "./modules/compute"
 
   resource_group_name  = azurerm_resource_group.main.name
@@ -143,20 +179,52 @@ module "backend" {
 
 # Role Assignment - Frontend VMSS gets AcrPull role on ACR
 resource "azurerm_role_assignment" "frontend_acrpull" {
+  count                = var.deploy_compute ? 1 : 0
   scope                = module.acr.acr_id
   role_definition_name = "AcrPull"
-  principal_id         = module.frontend.identity_principal_id
+  principal_id         = module.frontend[0].identity_principal_id
 
   depends_on = [module.frontend, module.acr]
 }
 
 # Role Assignment - Backend VMSS gets AcrPull role on ACR
 resource "azurerm_role_assignment" "backend_acrpull" {
+  count                = var.deploy_compute ? 1 : 0
   scope                = module.acr.acr_id
   role_definition_name = "AcrPull"
-  principal_id         = module.backend.identity_principal_id
+  principal_id         = module.backend[0].identity_principal_id
 
   depends_on = [module.backend, module.acr]
+}
+
+# Key Vault Access Policy for Frontend VMSS
+resource "azurerm_key_vault_access_policy" "frontend" {
+  count        = var.deploy_compute ? 1 : 0
+  key_vault_id = module.keyvault.key_vault_id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = module.frontend[0].identity_principal_id
+
+  secret_permissions = [
+    "Get",
+    "List"
+  ]
+
+  depends_on = [module.keyvault, module.frontend]
+}
+
+# Key Vault Access Policy for Backend VMSS
+resource "azurerm_key_vault_access_policy" "backend" {
+  count        = var.deploy_compute ? 1 : 0
+  key_vault_id = module.keyvault.key_vault_id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = module.backend[0].identity_principal_id
+
+  secret_permissions = [
+    "Get",
+    "List"
+  ]
+
+  depends_on = [module.keyvault, module.backend]
 }
 
 # Get Current Azure Client Config

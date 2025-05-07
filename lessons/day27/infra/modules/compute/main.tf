@@ -20,7 +20,7 @@ locals {
 #!/bin/bash
 # Install necessary packages
 apt-get update
-apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+apt-get install -y apt-transport-https ca-certificates curl software-properties-common dnsutils
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
 add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 apt-get update
@@ -33,8 +33,27 @@ az acr login --name ${split(".", var.acr_login_server)[0]} --expose-token
 # Pull and run container
 docker pull ${local.full_image_name}
 
-# Setup environment variables for container
 %{if !var.is_frontend && var.database_connection != null}
+# Ensure DNS resolution is working before trying to connect to the database
+echo "Checking DNS resolution for database host: ${var.database_connection.host}"
+max_attempts=20
+attempt=1
+while [ $attempt -le $max_attempts ]; do
+  echo "DNS resolution attempt $attempt of $max_attempts..."
+  if nslookup ${var.database_connection.host} > /dev/null 2>&1; then
+    echo "Successfully resolved database host: ${var.database_connection.host}"
+    break
+  else
+    echo "Failed to resolve database host. Waiting 15 seconds before retry..."
+    sleep 15
+    attempt=$((attempt+1))
+  fi
+done
+
+if [ $attempt -gt $max_attempts ]; then
+  echo "Failed to resolve database host after $max_attempts attempts. Proceeding anyway..."
+fi
+
 # Backend container needs DB environment variables
 docker run -d -p ${var.application_port}:${var.application_port} \
   -e DB_USERNAME=${var.database_connection.username} \
@@ -50,6 +69,7 @@ docker run -d -p ${var.application_port}:${var.application_port} \
 # Frontend container with simpler setup
 docker run -d -p ${var.application_port}:${var.application_port} \
   -e PORT=${var.application_port} \
+  -e BACKEND_URL=http://${var.is_frontend ? "backend-internal-lb:8080" : ""} \
   --restart always \
   ${local.full_image_name}
 %{endif}
@@ -89,7 +109,7 @@ resource "azurerm_application_gateway" "frontend" {
 
   gateway_ip_configuration {
     name      = "gateway-ip-config"
-    subnet_id = var.subnet_id
+    subnet_id = var.appgw_subnet_id != null ? var.appgw_subnet_id : var.subnet_id
   }
 
   frontend_port {
@@ -215,10 +235,13 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
   }
 
   # Enable automatic repairs for unhealthy VMs
-  automatic_instance_repair {
-    enabled      = true
-    grace_period = "PT30M" # 30 minutes grace period
-    action       = "Replace"
+  dynamic "automatic_instance_repair" {
+    for_each = var.is_frontend ? [] : [1]
+    content {
+      enabled      = true
+      grace_period = "PT30M" # 30 minutes grace period
+      action       = "Replace"
+    }
   }
 
   # Configure scale-in policy to remove oldest VMs first

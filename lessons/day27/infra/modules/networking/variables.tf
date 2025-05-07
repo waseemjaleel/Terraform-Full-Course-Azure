@@ -42,3 +42,8 @@ variable "bastion_subnet_prefix" {
   description = "Address prefix for Azure Bastion subnet"
   type        = string
 }
+
+variable "appgw_subnet_prefix" {
+  description = "Address prefix for Application Gateway subnet"
+  type        = string
+}
