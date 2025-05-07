@@ -1,0 +1,163 @@
+locals {
+  resource_name_prefix = "${var.environment}-${random_string.suffix.result}"
+  common_tags          = merge(var.tags, { Environment = var.environment })
+}
+
+resource "random_string" "suffix" {
+  length  = 6
+  special = false
+  upper   = false
+}
+
+# Resource Group
+resource "azurerm_resource_group" "main" {
+  name     = "${var.resource_group_name}-${var.environment}"
+  location = var.location
+  tags     = local.common_tags
+}
+
+# Networking Module
+module "networking" {
+  source = "./modules/networking"
+
+  resource_group_name      = azurerm_resource_group.main.name
+  location                 = var.location
+  resource_name_prefix     = local.resource_name_prefix
+  vnet_address_space       = var.vnet_address_space
+  public_subnet_prefixes   = var.public_subnet_prefixes
+  private_subnet_prefixes  = var.private_subnet_prefixes
+  database_subnet_prefixes = var.database_subnet_prefixes
+  bastion_subnet_prefix    = var.bastion_subnet_prefix
+  tags                     = local.common_tags
+}
+
+# Azure Container Registry
+module "acr" {
+  source = "./modules/acr"
+
+  resource_group_name      = azurerm_resource_group.main.name
+  location                 = var.location
+  resource_name_prefix     = local.resource_name_prefix
+  georeplication_locations = [var.secondary_location] # Added for geo-replication
+  tags                     = local.common_tags
+}
+
+# Key Vault
+module "keyvault" {
+  source = "./modules/keyvault"
+
+  resource_group_name  = azurerm_resource_group.main.name
+  location             = var.location
+  resource_name_prefix = local.resource_name_prefix
+  tenant_id            = data.azurerm_client_config.current.tenant_id
+  object_id            = data.azurerm_client_config.current.object_id
+  tags                 = local.common_tags
+
+
+  depends_on = [module.database]
+}
+
+# Database
+module "database" {
+  source = "./modules/database"
+
+  resource_group_name  = azurerm_resource_group.main.name
+  location             = var.location
+  resource_name_prefix = local.resource_name_prefix
+  database_subnet_ids  = module.networking.database_subnet_ids
+  private_dns_zone_id  = module.dns.private_dns_zone_id
+  postgres_sku_name    = var.postgres_sku_name
+  postgres_version     = var.postgres_version
+  postgres_storage_mb  = var.postgres_storage_mb
+  postgres_db_name     = var.postgres_db_name
+  tags                 = local.common_tags
+
+  depends_on = [module.dns]
+}
+
+# DNS for Private Endpoints
+module "dns" {
+  source = "./modules/dns"
+
+  resource_group_name = azurerm_resource_group.main.name
+  vnet_id             = module.networking.vnet_id
+  tags                = local.common_tags
+}
+
+# Compute - Frontend VMSS
+module "frontend" {
+  source = "./modules/compute"
+
+  resource_group_name  = azurerm_resource_group.main.name
+  location             = var.location
+  resource_name_prefix = local.resource_name_prefix
+  subnet_id            = module.networking.public_subnet_ids[0]
+  vm_size              = var.frontend_vm_size
+  instance_count       = var.frontend_instances
+  admin_username       = var.admin_username
+  acr_login_server     = module.acr.login_server
+  acr_admin_username   = module.acr.admin_username
+  acr_admin_password   = module.acr.admin_password
+  docker_image         = var.frontend_image
+  is_frontend          = true
+  application_port     = 3000
+  health_probe_path    = "/"
+  key_vault_id         = module.keyvault.key_vault_id
+  tags                 = local.common_tags
+
+  depends_on = [module.acr, module.keyvault]
+}
+
+# Compute - Backend VMSS
+module "backend" {
+  source = "./modules/compute"
+
+  resource_group_name  = azurerm_resource_group.main.name
+  location             = var.location
+  resource_name_prefix = local.resource_name_prefix
+  subnet_id            = module.networking.private_subnet_ids[0]
+  vm_size              = var.backend_vm_size
+  instance_count       = var.backend_instances
+  admin_username       = var.admin_username
+  acr_login_server     = module.acr.login_server
+  acr_admin_username   = module.acr.admin_username
+  acr_admin_password   = module.acr.admin_password
+  docker_image         = var.backend_image
+  is_frontend          = false
+  application_port     = 8080
+  health_probe_path    = "/health"
+  key_vault_id         = module.keyvault.key_vault_id
+  tags                 = local.common_tags
+
+  database_connection = {
+    host     = module.database.server_fqdn
+    port     = 5432
+    username = module.database.administrator_login
+    password = module.database.administrator_password
+    dbname   = var.postgres_db_name
+    sslmode  = "require"
+  }
+
+  depends_on = [module.acr, module.keyvault, module.database]
+}
+
+# Role Assignment - Frontend VMSS gets AcrPull role on ACR
+resource "azurerm_role_assignment" "frontend_acrpull" {
+  scope                = module.acr.acr_id
+  role_definition_name = "AcrPull"
+  principal_id         = module.frontend.identity_principal_id
+
+  depends_on = [module.frontend, module.acr]
+}
+
+# Role Assignment - Backend VMSS gets AcrPull role on ACR
+resource "azurerm_role_assignment" "backend_acrpull" {
+  scope                = module.acr.acr_id
+  role_definition_name = "AcrPull"
+  principal_id         = module.backend.identity_principal_id
+
+  depends_on = [module.backend, module.acr]
+}
+
+# Get Current Azure Client Config
+data "azurerm_client_config" "current" {}
