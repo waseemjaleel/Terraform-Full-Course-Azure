@@ -32,6 +32,7 @@ data "template_file" "provisioning_script" {
     acr_admin_password        = var.acr_admin_password
     application_port          = var.application_port
     full_image_name           = local.full_image_name
+    backend_lb_ip             = var.backend_load_balancer_ip
     } : {
     # Backend script variables
     user_assigned_identity_id = var.user_assigned_identity_id

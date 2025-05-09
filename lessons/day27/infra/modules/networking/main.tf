@@ -160,7 +160,17 @@ resource "azurerm_network_security_group" "private" {
     source_address_prefix      = var.vnet_address_space
     destination_address_prefix = "*"
   }
-
+  security_rule {
+    name                       = "AllowInternetOutbound"
+    priority                   = 120
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "Internet"
+  }
 
 }
 
@@ -314,6 +324,30 @@ resource "azurerm_network_security_group" "bastion" {
   }
 }
 
+# Bastion Public IP
+resource "azurerm_public_ip" "bastion" {
+  name                = "${var.resource_name_prefix}-bastion-pip"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+  tags                = var.tags
+}
+
+# Bastion Host
+resource "azurerm_bastion_host" "main" {
+  name                = "${var.resource_name_prefix}-bastion"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  tags                = var.tags
+
+  ip_configuration {
+    name                 = "configuration"
+    subnet_id            = azurerm_subnet.bastion.id
+    public_ip_address_id = azurerm_public_ip.bastion.id
+  }
+}
+
 # Associate NSGs with subnets
 resource "azurerm_subnet_network_security_group_association" "public" {
   count                     = length(azurerm_subnet.public)
@@ -338,9 +372,11 @@ resource "azurerm_subnet_network_security_group_association" "bastion" {
   network_security_group_id = azurerm_network_security_group.bastion.id
 }
 
-# Bastion Public IP
-resource "azurerm_public_ip" "bastion" {
-  name                = "${var.resource_name_prefix}-bastion-pip"
+
+
+# NAT Gateway Public IP for backend subnets
+resource "azurerm_public_ip" "natgw" {
+  name                = "${var.resource_name_prefix}-natgw-pip"
   location            = var.location
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
@@ -348,16 +384,25 @@ resource "azurerm_public_ip" "bastion" {
   tags                = var.tags
 }
 
-# Bastion Host
-resource "azurerm_bastion_host" "main" {
-  name                = "${var.resource_name_prefix}-bastion"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  tags                = var.tags
+# NAT Gateway
+resource "azurerm_nat_gateway" "main" {
+  name                    = "${var.resource_name_prefix}-natgw"
+  location                = var.location
+  resource_group_name     = var.resource_group_name
+  sku_name                = "Standard"
+  idle_timeout_in_minutes = 10
+  tags                    = var.tags
+}
 
-  ip_configuration {
-    name                 = "configuration"
-    subnet_id            = azurerm_subnet.bastion.id
-    public_ip_address_id = azurerm_public_ip.bastion.id
-  }
+# Associate NAT Gateway with its Public IP
+resource "azurerm_nat_gateway_public_ip_association" "main" {
+  nat_gateway_id       = azurerm_nat_gateway.main.id
+  public_ip_address_id = azurerm_public_ip.natgw.id
+}
+
+# Associate NAT Gateway with private subnets
+resource "azurerm_subnet_nat_gateway_association" "private" {
+  count          = length(azurerm_subnet.private)
+  subnet_id      = azurerm_subnet.private[count.index].id
+  nat_gateway_id = azurerm_nat_gateway.main.id
 }

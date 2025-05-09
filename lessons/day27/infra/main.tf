@@ -179,14 +179,17 @@ module "frontend" {
   application_port     = 3000
   health_probe_path    = "/"
   key_vault_id         = module.keyvault.key_vault_id
+  # Pass the backend load balancer IP if the backend module has been created
+  backend_load_balancer_ip = var.deploy_compute ? module.backend[0].load_balancer_private_ip : null
   # No longer using managed identities for ACR auth - pass null instead
   user_assigned_identity_id = null
   tags                      = local.common_tags
 
   depends_on = [
     module.acr,
-    module.keyvault
-    # Removed dependency on azurerm_role_assignment.frontend_identity_acrpull as we're using admin auth
+    module.keyvault,
+    # We can't use conditionals in depends_on, so we'll rely on the backend module's count to handle this dependency
+    module.backend
   ]
 }
 

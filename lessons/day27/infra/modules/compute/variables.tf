@@ -104,3 +104,9 @@ variable "user_assigned_identity_id" {
   type        = string
   default     = null
 }
+
+variable "backend_load_balancer_ip" {
+  description = "Private IP address of the backend load balancer (for frontend only)"
+  type        = string
+  default     = null
+}

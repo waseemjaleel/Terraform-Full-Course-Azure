@@ -55,11 +55,39 @@ echo "Successfully logged into ACR."
 echo "Pulling Docker image: ${full_image_name}"
 docker pull "${full_image_name}"
 
-echo "Running Docker container..."
-# Frontend container with simpler setup
+# Use backend LB IP provided by Terraform
+backend_lb_ip="${backend_lb_ip}"
+echo "Using backend load balancer IP: $backend_lb_ip"
+
+# If no IP was provided, try to discover it
+if [ -z "$backend_lb_ip" ]; then
+  echo "No backend LB IP provided, attempting to discover it..."
+  # Try to find the backend load balancer by scanning the subnet
+  for subnet in "10.0.3" "10.0.4"; do
+    # Search the common IP range where internal load balancers are deployed
+    for last_octet in $(seq 1 10); do
+      potential_ip="$subnet.$last_octet"
+      echo "Testing connectivity to potential backend at $potential_ip:8080..."
+      if nc -z -w 1 $potential_ip 8080 2>/dev/null; then
+        echo "Found backend load balancer at $potential_ip:8080"
+        backend_lb_ip=$potential_ip
+        break 2
+      fi
+    done
+  done
+
+  # Use default if discovery failed
+  if [ -z "$backend_lb_ip" ]; then
+    echo "Warning: Could not detect backend load balancer, using default value 10.0.3.4"
+    backend_lb_ip="10.0.3.4"
+  fi
+fi
+
+echo "Running Docker container with backend URL: http://${backend_lb_ip}:8080"
+# Frontend container with properly configured backend URL
 docker run -d -p "${application_port}:${application_port}" \
   -e PORT="${application_port}" \
-  -e BACKEND_URL="http://backend-internal-lb:8080" \
+  -e BACKEND_URL="http://${backend_lb_ip}:8080" \
   --restart always \
   "${full_image_name}"
 
