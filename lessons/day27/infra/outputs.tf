@@ -43,6 +43,23 @@ output "postgres_replica_name" {
   value       = module.database.replica_name
 }
 
+output "postgres_admin_username" {
+  description = "The administrator username of the PostgreSQL server"
+  value       = module.database.administrator_login
+  sensitive   = true
+}
+
+output "postgres_admin_password" {
+  description = "The administrator password of the PostgreSQL server"
+  value       = module.database.administrator_password
+  sensitive   = true
+}
+
+output "postgres_database_name" {
+  description = "The name of the PostgreSQL database"
+  value       = module.database.database_name
+}
+
 output "key_vault_name" {
   description = "The name of the Key Vault"
   value       = module.keyvault.key_vault_name
@@ -56,6 +73,12 @@ output "key_vault_uri" {
 output "acr_login_server" {
   description = "The login server URL for the Azure Container Registry"
   value       = module.acr.login_server
+}
+
+output "acr_admin_username" {
+  description = "The admin username of the Azure Container Registry"
+  value       = module.acr.admin_username
+  sensitive   = true
 }
 
 output "private_dns_zone_name" {
@@ -76,4 +99,36 @@ output "backend_vmss_id" {
 output "bastion_host_name" {
   description = "The name of the Bastion Host"
   value       = module.networking.bastion_host_name
+}
+
+output "frontend_ssh_private_key" {
+  description = "Private key for SSH access to the frontend VMs"
+  value       = var.deploy_compute ? module.frontend[0].ssh_private_key : null
+  sensitive   = true
+}
+
+output "backend_ssh_private_key" {
+  description = "Private key for SSH access to the backend VMs"
+  value       = var.deploy_compute ? module.backend[0].ssh_private_key : null
+  sensitive   = true
+}
+
+output "frontend_url" {
+  description = "The URL of the frontend application"
+  value       = var.deploy_compute ? "http://${module.frontend[0].public_ip_address}" : "Frontend not deployed"
+}
+
+output "backend_load_balancer_ip" {
+  description = "The private IP address of the backend load balancer"
+  value       = var.deploy_compute ? module.backend[0].load_balancer_private_ip : "Backend not deployed"
+}
+
+output "resource_group_id" {
+  description = "The ID of the resource group"
+  value       = azurerm_resource_group.main.id
+}
+
+output "keyvault_id" {
+  description = "The ID of the Key Vault"
+  value       = module.keyvault.key_vault_id
 }

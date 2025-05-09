@@ -33,8 +33,16 @@ resource "azurerm_postgresql_flexible_server" "primary" {
   sku_name               = var.postgres_sku_name
   tags                   = var.tags
 
+  # Using ignore_changes for zone to prevent unnecessary updates after failovers
+  lifecycle {
+    ignore_changes = [
+      zone,
+      high_availability[0].standby_availability_zone
+    ]
+  }
+
   high_availability {
-    mode = "ZoneRedundant"
+    mode                      = "ZoneRedundant"
     standby_availability_zone = "2"
   }
 

@@ -15,65 +15,38 @@ locals {
   # Full image name with ACR login server
   full_image_name = "${var.acr_login_server}/${var.docker_image}"
 
-  # Setup script for the VMs - this will run on each VM to pull and run the Docker container
-  custom_data = <<-CUSTOM_DATA
-#!/bin/bash
-# Install necessary packages
-apt-get update
-apt-get install -y apt-transport-https ca-certificates curl software-properties-common dnsutils
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-apt-get update
-apt-get install -y docker-ce azure-cli
+  # Path to provisioning scripts
+  frontend_script_path = "${path.module}/scripts/frontend_provision.sh"
+  backend_script_path  = "${path.module}/scripts/backend_provision.sh"
+}
 
-# Configure docker to use the system-assigned managed identity for ACR authentication
-az login --identity
-az acr login --name ${split(".", var.acr_login_server)[0]} --expose-token
+# Template files for provisioning scripts with variable substitution
+data "template_file" "provisioning_script" {
+  template = file(var.is_frontend ? local.frontend_script_path : local.backend_script_path)
 
-# Pull and run container
-docker pull ${local.full_image_name}
-
-%{if !var.is_frontend && var.database_connection != null}
-# Ensure DNS resolution is working before trying to connect to the database
-echo "Checking DNS resolution for database host: ${var.database_connection.host}"
-max_attempts=20
-attempt=1
-while [ $attempt -le $max_attempts ]; do
-  echo "DNS resolution attempt $attempt of $max_attempts..."
-  if nslookup ${var.database_connection.host} > /dev/null 2>&1; then
-    echo "Successfully resolved database host: ${var.database_connection.host}"
-    break
-  else
-    echo "Failed to resolve database host. Waiting 15 seconds before retry..."
-    sleep 15
-    attempt=$((attempt+1))
-  fi
-done
-
-if [ $attempt -gt $max_attempts ]; then
-  echo "Failed to resolve database host after $max_attempts attempts. Proceeding anyway..."
-fi
-
-# Backend container needs DB environment variables
-docker run -d -p ${var.application_port}:${var.application_port} \
-  -e DB_USERNAME=${var.database_connection.username} \
-  -e DB_PASSWORD=${var.database_connection.password} \
-  -e DB_HOST=${var.database_connection.host} \
-  -e DB_PORT=${var.database_connection.port} \
-  -e DB_NAME=${var.database_connection.dbname} \
-  -e SSL=${var.database_connection.sslmode} \
-  -e PORT=${var.application_port} \
-  --restart always \
-  ${local.full_image_name}
-%{else}
-# Frontend container with simpler setup
-docker run -d -p ${var.application_port}:${var.application_port} \
-  -e PORT=${var.application_port} \
-  -e BACKEND_URL=http://${var.is_frontend ? "backend-internal-lb:8080" : ""} \
-  --restart always \
-  ${local.full_image_name}
-%{endif}
-CUSTOM_DATA
+  vars = var.is_frontend ? {
+    # Frontend script variables
+    user_assigned_identity_id = var.user_assigned_identity_id
+    acr_name                  = split(".", var.acr_login_server)[0]
+    acr_admin_username        = var.acr_admin_username
+    acr_admin_password        = var.acr_admin_password
+    application_port          = var.application_port
+    full_image_name           = local.full_image_name
+    } : {
+    # Backend script variables
+    user_assigned_identity_id = var.user_assigned_identity_id
+    acr_name                  = split(".", var.acr_login_server)[0]
+    acr_admin_username        = var.acr_admin_username
+    acr_admin_password        = var.acr_admin_password
+    application_port          = var.application_port
+    full_image_name           = local.full_image_name
+    db_host                   = var.database_connection.host
+    db_port                   = var.database_connection.port
+    db_username               = var.database_connection.username
+    db_password               = var.database_connection.password
+    db_name                   = var.database_connection.dbname
+    db_sslmode                = var.database_connection.sslmode
+  }
 }
 
 # VM SSH Key for Admin Access
@@ -223,7 +196,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
   sku                 = var.vm_size
   instances           = var.instance_count
   admin_username      = var.admin_username
-  custom_data         = base64encode(local.custom_data)
+  custom_data         = base64encode(data.template_file.provisioning_script.rendered)
   upgrade_mode        = "Automatic"
   health_probe_id     = var.is_frontend ? null : azurerm_lb_probe.backend[0].id
   tags                = var.tags
@@ -291,8 +264,20 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
     }
   }
 
-  identity {
-    type = "SystemAssigned"
+  # Use user-assigned identity if provided, otherwise fall back to system-assigned
+  dynamic "identity" {
+    for_each = var.user_assigned_identity_id != null ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.user_assigned_identity_id]
+    }
+  }
+
+  dynamic "identity" {
+    for_each = var.user_assigned_identity_id == null ? [1] : []
+    content {
+      type = "SystemAssigned"
+    }
   }
 }
 

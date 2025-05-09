@@ -1,3 +1,6 @@
+# Get current Azure client config for tenant_id and object_id
+data "azurerm_client_config" "current" {}
+
 locals {
   resource_name_prefix = "${var.environment}-${random_string.suffix.result}"
   common_tags          = merge(var.tags, { Environment = var.environment })
@@ -15,6 +18,24 @@ resource "azurerm_resource_group" "main" {
   location = var.location
   tags     = local.common_tags
 }
+
+# Create user-assigned managed identities first
+# Commenting out managed identities as they are not needed when using ACR username/password auth
+# resource "azurerm_user_assigned_identity" "frontend" {
+#   count               = var.deploy_compute ? 1 : 0
+#   resource_group_name = azurerm_resource_group.main.name
+#   location            = var.location
+#   name                = "${local.resource_name_prefix}-frontend-identity"
+#   tags                = local.common_tags
+# }
+
+# resource "azurerm_user_assigned_identity" "backend" {
+#   count               = var.deploy_compute ? 1 : 0
+#   resource_group_name = azurerm_resource_group.main.name
+#   location            = var.location
+#   name                = "${local.resource_name_prefix}-backend-identity"
+#   tags                = local.common_tags
+# }
 
 # Networking Module
 module "networking" {
@@ -42,6 +63,26 @@ module "acr" {
   georeplication_locations = [var.secondary_location] # Added for geo-replication
   tags                     = local.common_tags
 }
+
+# Assign AcrPull role to identities before VMSS creation
+# Commenting out as we're using ACR admin username/password authentication
+# resource "azurerm_role_assignment" "frontend_identity_acrpull" {
+#   count                = var.deploy_compute ? 1 : 0
+#   scope                = module.acr.acr_id
+#   role_definition_name = "AcrPull"
+#   principal_id         = azurerm_user_assigned_identity.frontend[0].principal_id
+#
+#   depends_on = [azurerm_user_assigned_identity.frontend, module.acr]
+# }
+#
+# resource "azurerm_role_assignment" "backend_identity_acrpull" {
+#   count                = var.deploy_compute ? 1 : 0
+#   scope                = module.acr.acr_id
+#   role_definition_name = "AcrPull"
+#   principal_id         = azurerm_user_assigned_identity.backend[0].principal_id
+#
+#   depends_on = [azurerm_user_assigned_identity.backend, module.acr]
+# }
 
 # Key Vault
 module "keyvault" {
@@ -138,9 +179,15 @@ module "frontend" {
   application_port     = 3000
   health_probe_path    = "/"
   key_vault_id         = module.keyvault.key_vault_id
-  tags                 = local.common_tags
+  # No longer using managed identities for ACR auth - pass null instead
+  user_assigned_identity_id = null
+  tags                      = local.common_tags
 
-  depends_on = [module.acr, module.keyvault]
+  depends_on = [
+    module.acr,
+    module.keyvault
+    # Removed dependency on azurerm_role_assignment.frontend_identity_acrpull as we're using admin auth
+  ]
 }
 
 # Compute - Backend VMSS
@@ -163,7 +210,9 @@ module "backend" {
   application_port     = 8080
   health_probe_path    = "/health"
   key_vault_id         = module.keyvault.key_vault_id
-  tags                 = local.common_tags
+  # No longer using managed identities for ACR auth - pass null instead
+  user_assigned_identity_id = null
+  tags                      = local.common_tags
 
   database_connection = {
     host     = module.database.server_fqdn
@@ -174,58 +223,83 @@ module "backend" {
     sslmode  = "require"
   }
 
-  depends_on = [module.acr, module.keyvault, module.database]
+  depends_on = [
+    module.acr,
+    module.keyvault,
+    module.database
+    # Removed dependency on azurerm_role_assignment.backend_identity_acrpull as we're using admin auth
+  ]
 }
 
+# Monitoring Module for VMSS
+# module "monitoring" {
+#   source = "./modules/monitoring"
+
+#   resource_group_name         = azurerm_resource_group.main.name
+#   location                    = var.location
+#   resource_name_prefix        = local.resource_name_prefix
+#   frontend_vmss_id            = var.deploy_compute ? module.frontend[0].vmss_id : null
+#   backend_vmss_id             = var.deploy_compute ? module.backend[0].vmss_id : null
+#   create_frontend_diagnostics = var.deploy_compute
+#   create_backend_diagnostics  = var.deploy_compute
+#   log_analytics_sku           = var.log_analytics_sku
+#   log_retention_days          = var.log_retention_days
+#   alert_email                 = var.alert_email
+#   tags                        = local.common_tags
+
+#   depends_on = [module.frontend, module.backend]
+# }
+
+# DUPLICATE RESOURCES - COMMENTED OUT TO RESOLVE 409 CONFLICT
+# These role assignments are already created by frontend_identity_acrpull and backend_identity_acrpull above
 # Role Assignment - Frontend VMSS gets AcrPull role on ACR
-resource "azurerm_role_assignment" "frontend_acrpull" {
-  count                = var.deploy_compute ? 1 : 0
-  scope                = module.acr.acr_id
-  role_definition_name = "AcrPull"
-  principal_id         = module.frontend[0].identity_principal_id
-
-  depends_on = [module.frontend, module.acr]
-}
+# resource "azurerm_role_assignment" "frontend_acrpull" {
+#   count                = var.deploy_compute ? 1 : 0
+#   scope                = module.acr.acr_id
+#   role_definition_name = "AcrPull"
+#   principal_id         = azurerm_user_assigned_identity.frontend[0].principal_id
+#   depends_on = [module.frontend, module.acr]
+# }
 
 # Role Assignment - Backend VMSS gets AcrPull role on ACR
-resource "azurerm_role_assignment" "backend_acrpull" {
-  count                = var.deploy_compute ? 1 : 0
-  scope                = module.acr.acr_id
-  role_definition_name = "AcrPull"
-  principal_id         = module.backend[0].identity_principal_id
-
-  depends_on = [module.backend, module.acr]
-}
+# resource "azurerm_role_assignment" "backend_acrpull" {
+#   count                = var.deploy_compute ? 1 : 0
+#   scope                = module.acr.acr_id
+#   role_definition_name = "AcrPull"
+#   principal_id         = azurerm_user_assigned_identity.backend[0].principal_id
+#   depends_on = [module.backend, module.acr]
+# }
 
 # Key Vault Access Policy for Frontend VMSS
-resource "azurerm_key_vault_access_policy" "frontend" {
-  count        = var.deploy_compute ? 1 : 0
-  key_vault_id = module.keyvault.key_vault_id
-  tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = module.frontend[0].identity_principal_id
-
-  secret_permissions = [
-    "Get",
-    "List"
-  ]
-
-  depends_on = [module.keyvault, module.frontend]
-}
+# Commenting out as they reference the commented-out managed identities
+# resource "azurerm_key_vault_access_policy" "frontend" {
+#   count        = var.deploy_compute ? 1 : 0
+#   key_vault_id = module.keyvault.key_vault_id
+#   tenant_id    = data.azurerm_client_config.current.tenant_id
+#   # Changed to use the frontend user-assigned identity directly
+#   object_id = azurerm_user_assigned_identity.frontend[0].principal_id
+#
+#   secret_permissions = [
+#     "Get",
+#     "List"
+#   ]
+#
+#   depends_on = [module.keyvault, module.frontend]
+# }
 
 # Key Vault Access Policy for Backend VMSS
-resource "azurerm_key_vault_access_policy" "backend" {
-  count        = var.deploy_compute ? 1 : 0
-  key_vault_id = module.keyvault.key_vault_id
-  tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = module.backend[0].identity_principal_id
-
-  secret_permissions = [
-    "Get",
-    "List"
-  ]
-
-  depends_on = [module.keyvault, module.backend]
-}
-
-# Get Current Azure Client Config
-data "azurerm_client_config" "current" {}
+# Commenting out as they reference the commented-out managed identities
+# resource "azurerm_key_vault_access_policy" "backend" {
+#   count        = var.deploy_compute ? 1 : 0
+#   key_vault_id = module.keyvault.key_vault_id
+#   tenant_id    = data.azurerm_client_config.current.tenant_id
+#   # Changed to use the backend user-assigned identity directly
+#   object_id = azurerm_user_assigned_identity.backend[0].principal_id
+#
+#   secret_permissions = [
+#     "Get",
+#     "List"
+#   ]
+#
+#   depends_on = [module.keyvault, module.backend]
+# }

@@ -134,6 +134,25 @@ variable "backend_image" {
   default     = "backend:latest"
 }
 
+# Monitoring variables
+variable "log_analytics_sku" {
+  description = "The SKU of the Log Analytics Workspace"
+  type        = string
+  default     = "PerGB2018"
+}
+
+variable "log_retention_days" {
+  description = "The number of days to retain logs"
+  type        = number
+  default     = 30
+}
+
+variable "alert_email" {
+  description = "Email address for monitoring alerts"
+  type        = string
+  default     = "admin@example.com"
+}
+
 # Tags
 variable "tags" {
   description = "Tags to apply to all resources"

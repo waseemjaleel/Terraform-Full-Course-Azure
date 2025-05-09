@@ -45,6 +45,6 @@ output "ssh_private_key" {
 }
 
 output "identity_principal_id" {
-  description = "Principal ID of the System Assigned Managed Identity"
-  value       = azurerm_linux_virtual_machine_scale_set.vmss.identity[0].principal_id
+  description = "Principal ID of the Managed Identity"
+  value       = var.user_assigned_identity_id != null ? null : try(azurerm_linux_virtual_machine_scale_set.vmss.identity[0].principal_id, null)
 }

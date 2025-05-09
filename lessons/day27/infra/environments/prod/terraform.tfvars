@@ -25,7 +25,7 @@ admin_username     = "adminuser"
 postgres_sku_name   = "GP_Standard_D2s_v3"
 postgres_version    = "14"
 postgres_storage_mb = 32768
-postgres_db_name    = "goapp"
+postgres_db_name    = "goalsdb"
 
 # Docker image settings
 frontend_image = "frontend:latest"

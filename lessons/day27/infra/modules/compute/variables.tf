@@ -98,3 +98,9 @@ variable "database_connection" {
   default   = null
   sensitive = true
 }
+
+variable "user_assigned_identity_id" {
+  description = "ID of the user-assigned managed identity to use for ACR authentication"
+  type        = string
+  default     = null
+}
