@@ -99,16 +99,28 @@ resource "azurerm_postgresql_flexible_server_configuration" "primary_ssl" {
   name      = "ssl_min_protocol_version"
   server_id = azurerm_postgresql_flexible_server.primary.id
   value     = "TLSv1.2"
+
+  depends_on = [
+    azurerm_postgresql_flexible_server.replica # Ensure the replica is created before applying this configuration
+  ]
 }
 
 resource "azurerm_postgresql_flexible_server_configuration" "primary_log_connections" {
   name      = "log_connections"
   server_id = azurerm_postgresql_flexible_server.primary.id
   value     = "on"
+
+  depends_on = [
+    azurerm_postgresql_flexible_server.replica # Ensure the replica is created before applying this configuration
+  ]
 }
 
 resource "azurerm_postgresql_flexible_server_configuration" "primary_log_checkpoints" {
   name      = "log_checkpoints"
   server_id = azurerm_postgresql_flexible_server.primary.id
   value     = "on"
+
+  depends_on = [
+    azurerm_postgresql_flexible_server.replica # Ensure the replica is created before applying this configuration
+  ]
 }

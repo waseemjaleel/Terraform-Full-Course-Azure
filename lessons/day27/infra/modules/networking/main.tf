@@ -373,6 +373,15 @@ resource "azurerm_subnet_network_security_group_association" "bastion" {
 }
 
 
+# NAT Gateway Provides outbound internet connectivity for private subnets
+resource "azurerm_nat_gateway" "main" {
+  name                    = "${var.resource_name_prefix}-natgw"
+  location                = var.location
+  resource_group_name     = var.resource_group_name
+  sku_name                = "Standard"
+  idle_timeout_in_minutes = 10
+  tags                    = var.tags
+}
 
 # NAT Gateway Public IP for backend subnets
 resource "azurerm_public_ip" "natgw" {
@@ -384,15 +393,7 @@ resource "azurerm_public_ip" "natgw" {
   tags                = var.tags
 }
 
-# NAT Gateway
-resource "azurerm_nat_gateway" "main" {
-  name                    = "${var.resource_name_prefix}-natgw"
-  location                = var.location
-  resource_group_name     = var.resource_group_name
-  sku_name                = "Standard"
-  idle_timeout_in_minutes = 10
-  tags                    = var.tags
-}
+
 
 # Associate NAT Gateway with its Public IP
 resource "azurerm_nat_gateway_public_ip_association" "main" {

@@ -108,89 +108,6 @@ This Terraform project deploys a secure and scalable 3-tier application infrastr
 
 ## Architecture Overview
 
-Below is a detailed diagram of the infrastructure:
-
-```
-                                     Azure Cloud
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                                                                             │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │                          Resource Group                               │  │
-│  │                                                                       │  │
-│  │  ┌──────────────┐      ┌───────────────────┐      ┌──────────────┐   │  │
-│  │  │              │      │                   │      │              │   │  │
-│  │  │    Azure     │      │  Virtual Network  │      │    Azure     │   │  │
-│  │  │  Container   │      │                   │      │   KeyVault   │   │  │
-│  │  │   Registry   │      │  ┌─────────────┐  │      │              │   │  │
-│  │  │              │      │  │   Public    │  │      └──────────────┘   │  │
-│  │  └──────────────┘      │  │  Subnets    │  │                         │  │
-│  │   │                    │  │  (AZ1+AZ2)  │  │                         │  │
-│  │   │                    │  │             │  │                         │  │
-│  │   │                    │  │  ┌─────────┐│  │                         │  │
-│  │   │                    │  │  │Frontend ││  │      ┌──────────────┐   │  │
-│  │   ▼                    │  │  │  VMSS   ││  │      │    Azure     │   │  │
-│  │  ┌───────────┐         │  │  └─────────┘│  │      │   Monitor    │   │  │
-│  │  │Docker Img │         │  │      │      │  │      │              │   │  │
-│  │  │  Storage  │         │  │      │      │  │      └──────────────┘   │  │
-│  │  └───────────┘         │  │      ▼      │  │             ▲           │  │
-│  │                        │  │  ┌─────────┐│  │             │           │  │
-│  │                        │  │  │  App    ││  │             │           │  │
-└──┼────────────────────────┼──┼──┤ Gateway ││  │             │           │  │
-   │                        │  │  │  (WAF)  ││  │             │           │  │
-┌──┼────────────────────────┼──┼──└─────────┘│  │             │           │  │
-│  │                        │  │      │      │  │             │           │  │
-│  │                        │  └──────┼──────┘  │             │           │  │
-│  │                        │         │         │             │           │  │
-│  │                        │         ▼         │             │           │  │
-│  │                        │  ┌─────────────┐  │             │           │  │
-│  │                        │  │  Private    │  │             │           │  │
-│  │                        │  │  Subnets    │  │             │           │  │
-│  │                        │  │  (AZ1+AZ2)  │  │             │           │  │
-│  │                        │  │             │  │             │           │  │
-│  │                        │  │  ┌─────────┐│  │             │           │  │
-│  │                        │  │  │Backend  ││  │             │           │  │
-│  │   ┌──────────────┐     │  │  │  VMSS   ││──┼─────────────┘           │  │
-│  │   │    Azure     │     │  │  └─────────┘│  │                         │  │
-│  │   │   Bastion    │     │  │      │      │  │                         │  │
-│  │   │     Host     │     │  │      │      │  │                         │  │
-│  │   └──────────────┘     │  │      ▼      │  │                         │  │
-│  │           │            │  │  ┌─────────┐│  │                         │  │
-│  │           │            │  │  │Internal ││  │                         │  │
-│  │           │            │  │  │   LB    ││  │                         │  │
-│  │           │            │  │  └─────────┘│  │                         │  │
-│  │           │            │  │      │      │  │                         │  │
-│  │           ▼            │  └──────┼──────┘  │                         │  │
-│  │  ┌──────────────┐              │           │                         │  │
-│  │  │  Secure SSH  │              ▼           │                         │  │
-│  │  │    Access    │      ┌─────────────┐     │                         │  │
-│  │  └──────────────┘      │  Database   │     │                         │  │
-│  │                        │  Subnets    │     │                         │  │
-│  │                        │  (AZ1+AZ2)  │     │                         │  │
-│  │                        │             │     │                         │  │
-│  │                        │  ┌─────────┐│     │  ┌──────────────┐       │  │
-│  │                        │  │Postgres ││     │  │Private DNS   │       │  │
-│  │                        │  │ Primary ││◄────┼──┤    Zone      │       │  │
-│  │                        │  └─────────┘│     │  └──────────────┘       │  │
-│  │                        │      │      │     │                         │  │
-│  │                        │      ▼      │     │                         │  │
-│  │                        │  ┌─────────┐│     │                         │  │
-│  │                        │  │Postgres ││     │                         │  │
-│  │                        │  │ Replica ││     │                         │  │
-│  │                        │  └─────────┘│     │                         │  │
-│  │                        └─────────────┘     │                         │  │
-│  │                                            │                         │  │
-│  └────────────────────────────────────────────┘                         │  │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-Internet Users
-     │
-     │
-     ▼
-  Website
-```
-
-![3-Tier Architecture](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.compute/vm-simple-linux/images/three-tier-architecture.png)
 
 ### Components
 
@@ -290,11 +207,14 @@ cd infra
 terraform apply -var-file="environments/prod/terraform.tfvars" -var="deploy_compute=false"
 ```
 
+*If you get an error about server busy, just rerun the above command.*
+
 This creates:
 - Resource group and networking components
 - Azure Container Registry
 - Azure Key Vault
 - PostgreSQL database and replica
+- Private DNS zones
 - Private DNS zones
 
 #### Stage 2: Build and Push Docker Images 
@@ -398,7 +318,7 @@ To destroy the infrastructure when no longer needed:
 ```bash
 terraform destroy -auto-approve
 ```
-
+*If You get a error in the destrucion process rerun the above command again*
 ## Contributing
 
 Please follow the standard Git workflow:
