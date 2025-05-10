@@ -512,7 +512,7 @@
             <h2>Track Your Terraform Journey Goals</h2>
         </div>
         
-        <form action="/add_goal" method="post" id="goal-form">
+        <form id="goal-form">
             <div class="input-group">
                 <input type="text" name="goal_name" placeholder="Enter your next DevOps goal..." required>
                 <button type="submit" class="add-btn">Add Goal</button>
@@ -520,23 +520,10 @@
             <div id="success-message" class="success-message">Goal added successfully!</div>
         </form>
         
-        {{ if .goals }}
-        <ul class="goal-list">
-            {{ range .goals }}
-            <li class="goal-item">
-                <span class="goal-text">{{ .Name }}</span>
-                <form action="/remove_goal" method="post">
-                    <input type="hidden" name="goal_id" value="{{ .ID }}">
-                    <button type="submit" class="delete-button">Remove</button>
-                </form>
-            </li>
-            {{ end }}
-        </ul>
-        {{ else }}
-        <div class="empty-state">
+        <ul class="goal-list" id="goal-list" style="display: none;"></ul>
+        <div class="empty-state" id="empty-state">
             <p>No goals yet. Add your first CloudOps goal above!</p>
         </div>
-        {{ end }}
     </div>
 
     <footer>
@@ -544,6 +531,52 @@
     </footer>
     
     <script>
+        // Load goals when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadGoals();
+        });
+
+        // Function to load goals from the API
+        function loadGoals() {
+            fetch('/api/goals')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.goals && data.goals.length > 0) {
+                        displayGoals(data.goals);
+                    } else {
+                        document.getElementById('goal-list').style.display = 'none';
+                        document.getElementById('empty-state').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading goals:', error);
+                });
+        }
+
+        // Function to display goals in the UI
+        function displayGoals(goals) {
+            const goalsList = document.getElementById('goal-list');
+            goalsList.innerHTML = '';
+            
+            goals.forEach(goal => {
+                const goalItem = document.createElement('li');
+                goalItem.className = 'goal-item';
+                goalItem.innerHTML = `
+                    <span class="goal-text">${goal.Name}</span>
+                    <button class="delete-button" data-id="${goal.ID}">Remove</button>
+                `;
+                goalsList.appendChild(goalItem);
+            });
+            
+            document.getElementById('goal-list').style.display = 'block';
+            document.getElementById('empty-state').style.display = 'none';
+            
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-button').forEach(button => {
+                button.addEventListener('click', deleteGoal);
+            });
+        }
+
         // Add goal form handling
         document.getElementById('goal-form').addEventListener('submit', function(e) {
             e.preventDefault(); // Prevent the standard form submission
@@ -556,13 +589,13 @@
             const goalNameInput = this.querySelector('input[name="goal_name"]');
             const goalName = goalNameInput.value;
             
-            // Send AJAX request
-            fetch('/add_goal', {
+            // Send API request
+            fetch('/api/goals', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Type': 'application/json',
                 },
-                body: `goal_name=${encodeURIComponent(goalName)}`
+                body: JSON.stringify({ goal_name: goalName })
             })
             .then(response => response.json())
             .then(data => {
@@ -570,35 +603,8 @@
                 const successMsg = document.getElementById('success-message');
                 successMsg.style.display = 'block';
                 
-                // Add the new goal to the DOM without reloading
-                if (data.goal) {
-                    const goalsList = document.querySelector('.goal-list');
-                    
-                    // If there's no goal list yet (first goal), create it
-                    if (!goalsList) {
-                        const emptyState = document.querySelector('.empty-state');
-                        if (emptyState) {
-                            emptyState.remove();
-                        }
-                        
-                        const newList = document.createElement('ul');
-                        newList.className = 'goal-list';
-                        document.querySelector('.container').appendChild(newList);
-                    }
-                    
-                    // Create the new goal element
-                    const newGoal = document.createElement('li');
-                    newGoal.className = 'goal-item';
-                    newGoal.innerHTML = `
-                        <span class="goal-text">${data.goal.Name}</span>
-                        <form action="/remove_goal" method="post">
-                            <input type="hidden" name="goal_id" value="${data.goal.ID}">
-                            <button type="submit" class="delete-button">Remove</button>
-                        </form>
-                    `;
-                    
-                    document.querySelector('.goal-list').appendChild(newGoal);
-                }
+                // Reload goals to display the updated list
+                loadGoals();
                 
                 // Reset the form
                 goalNameInput.value = '';
@@ -617,73 +623,47 @@
             });
         });
 
-        // Delete goal handling
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add click event listeners to all remove forms (for current and future goals)
-            document.querySelector('.container').addEventListener('click', function(e) {
-                // Find if the clicked element is a delete button or its parent is a form for deletion
-                const deleteButton = e.target.closest('.delete-button');
-                if (deleteButton) {
-                    e.preventDefault(); // Prevent the standard form submission
+        // Function to handle goal deletion
+        function deleteGoal(e) {
+            const goalId = e.target.dataset.id;
+            const originalText = e.target.textContent;
+            e.target.textContent = 'Removing...';
+            e.target.disabled = true;
+            
+            fetch(`/api/goals/${goalId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Find and remove the goal item
+                    const goalItem = e.target.closest('.goal-item');
+                    goalItem.style.opacity = '0';
+                    goalItem.style.transform = 'translateX(20px)';
                     
-                    const form = deleteButton.closest('form');
-                    const goalItem = form.closest('.goal-item');
-                    const goalId = form.querySelector('input[name="goal_id"]').value;
-                    
-                    // Change button text
-                    const originalText = deleteButton.textContent;
-                    deleteButton.textContent = 'Removing...';
-                    deleteButton.disabled = true;
-                    
-                    // Send AJAX request to remove goal
-                    fetch('/remove_goal', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `goal_id=${encodeURIComponent(goalId)}`
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Animate removal of the goal item
-                            goalItem.style.opacity = '0';
-                            goalItem.style.transform = 'translateX(20px)';
-                            
-                            // After animation completes, remove the element
-                            setTimeout(() => {
-                                goalItem.remove();
-                                
-                                // Check if there are any goals left
-                                if (document.querySelectorAll('.goal-item').length === 0) {
-                                    // Create empty state if no goals remain
-                                    const goalsList = document.querySelector('.goal-list');
-                                    if (goalsList) {
-                                        goalsList.remove();
-                                        
-                                        // Add empty state
-                                        const emptyState = document.createElement('div');
-                                        emptyState.className = 'empty-state';
-                                        emptyState.innerHTML = '<p>No goals yet. Add your first CloudOps goal above!</p>';
-                                        document.querySelector('.container').appendChild(emptyState);
-                                    }
-                                }
-                            }, 300);
-                        } else {
-                            alert('Failed to remove goal: ' + (data.error || 'Unknown error'));
-                            deleteButton.textContent = originalText;
-                            deleteButton.disabled = false;
+                    // After animation completes, remove the element
+                    setTimeout(() => {
+                        goalItem.remove();
+                        
+                        // Check if there are any goals left
+                        if (document.querySelectorAll('.goal-item').length === 0) {
+                            document.getElementById('goal-list').style.display = 'none';
+                            document.getElementById('empty-state').style.display = 'block';
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred while removing the goal');
-                        deleteButton.textContent = originalText;
-                        deleteButton.disabled = false;
-                    });
+                    }, 300);
+                } else {
+                    alert('Failed to remove goal: ' + (data.error || 'Unknown error'));
+                    e.target.textContent = originalText;
+                    e.target.disabled = false;
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while removing the goal');
+                e.target.textContent = originalText;
+                e.target.disabled = false;
             });
-        });
+        }
     </script>
 </body>
 </html>

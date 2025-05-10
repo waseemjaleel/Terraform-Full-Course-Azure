@@ -1,0 +1,413 @@
+# CloudOps Goal Tracker - Three-Tier Architecture
+
+This project demonstrates a modern three-tier architecture:
+
+1. **Presentation Layer (Frontend)**: Node.js/Express server serving a JavaScript frontend
+2. **Business Logic Layer (Backend)**: Go API service 
+3. **Data Layer**: PostgreSQL database
+
+## Architecture Overview
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│     Frontend    │     │     Backend     │     │    Database     │
+│    (Node.js)    │────▶│      (Go)       │────▶│   (PostgreSQL)  │
+│   Port: 3000    │     │   Port: 8080    │     │    Port: 5432   │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+                 
+```
+
+## Running the Application
+
+You can run the entire application stack using Docker Compose:
+
+```bash
+cd docker-local-deployment
+docker-compose up -d
+```
+
+### Accessing Components
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8080
+
+
+## Developing Components Individually
+
+### Frontend Development
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+The frontend is a Node.js/Express application that:
+- Serves static files from the `/public` directory
+- Provides API proxying to the backend
+- Handles all user interactions
+
+### Backend Development
+
+```bash
+cd backend
+go mod download
+go run main.go
+```
+
+The backend is a Go API service that:
+- Provides JSON REST API endpoints
+- Connects to the PostgreSQL database
+- Implements business logic
+- Exposes metrics for monitoring
+
+### Data Layer
+
+The PostgreSQL database:
+- Stores goal tracking data
+- Initializes with the schema defined in `docker-local-deployment/database/init.sql`
+
+## API Endpoints
+
+### Backend API (Go Service)
+
+- `GET /goals` - Get all goals
+- `POST /goals` - Add a new goal
+- `DELETE /goals/:id` - Delete a goal by ID
+- `GET /health` - Health check endpoint
+- `GET /metrics` - Prometheus metrics endpoint
+
+### Frontend API Proxy (Node.js)
+
+- `GET /api/goals` - Proxy to backend's GET /goals
+- `POST /api/goals` - Proxy to backend's POST /goals
+- `DELETE /api/goals/:id` - Proxy to backend's DELETE /goals/:id
+
+## Local Deployment using Docker Compose
+### Prerequisites
+- Docker (version 20.10+)
+- Docker Compose (version 2.0+)
+### Step 1: Go to the docker-local-deployment directory
+```bash
+cd docker-local-deployment
+```
+### Step 2: Copy paste the below command to run the application
+```bash
+docker-compose up -d
+```
+### Step 3: Access the application
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8080
+- Database: http://localhost:5432 (use pgAdmin or any other client to connect ) 
+
+
+
+# 3-Tier Application Infrastructure on Azure
+
+This Terraform project deploys a secure and scalable 3-tier application infrastructure in Azure, consisting of frontend, backend, and database tiers.
+
+## Architecture Overview
+
+Below is a detailed diagram of the infrastructure:
+
+```
+                                     Azure Cloud
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                          Resource Group                               │  │
+│  │                                                                       │  │
+│  │  ┌──────────────┐      ┌───────────────────┐      ┌──────────────┐   │  │
+│  │  │              │      │                   │      │              │   │  │
+│  │  │    Azure     │      │  Virtual Network  │      │    Azure     │   │  │
+│  │  │  Container   │      │                   │      │   KeyVault   │   │  │
+│  │  │   Registry   │      │  ┌─────────────┐  │      │              │   │  │
+│  │  │              │      │  │   Public    │  │      └──────────────┘   │  │
+│  │  └──────────────┘      │  │  Subnets    │  │                         │  │
+│  │   │                    │  │  (AZ1+AZ2)  │  │                         │  │
+│  │   │                    │  │             │  │                         │  │
+│  │   │                    │  │  ┌─────────┐│  │                         │  │
+│  │   │                    │  │  │Frontend ││  │      ┌──────────────┐   │  │
+│  │   ▼                    │  │  │  VMSS   ││  │      │    Azure     │   │  │
+│  │  ┌───────────┐         │  │  └─────────┘│  │      │   Monitor    │   │  │
+│  │  │Docker Img │         │  │      │      │  │      │              │   │  │
+│  │  │  Storage  │         │  │      │      │  │      └──────────────┘   │  │
+│  │  └───────────┘         │  │      ▼      │  │             ▲           │  │
+│  │                        │  │  ┌─────────┐│  │             │           │  │
+│  │                        │  │  │  App    ││  │             │           │  │
+└──┼────────────────────────┼──┼──┤ Gateway ││  │             │           │  │
+   │                        │  │  │  (WAF)  ││  │             │           │  │
+┌──┼────────────────────────┼──┼──└─────────┘│  │             │           │  │
+│  │                        │  │      │      │  │             │           │  │
+│  │                        │  └──────┼──────┘  │             │           │  │
+│  │                        │         │         │             │           │  │
+│  │                        │         ▼         │             │           │  │
+│  │                        │  ┌─────────────┐  │             │           │  │
+│  │                        │  │  Private    │  │             │           │  │
+│  │                        │  │  Subnets    │  │             │           │  │
+│  │                        │  │  (AZ1+AZ2)  │  │             │           │  │
+│  │                        │  │             │  │             │           │  │
+│  │                        │  │  ┌─────────┐│  │             │           │  │
+│  │                        │  │  │Backend  ││  │             │           │  │
+│  │   ┌──────────────┐     │  │  │  VMSS   ││──┼─────────────┘           │  │
+│  │   │    Azure     │     │  │  └─────────┘│  │                         │  │
+│  │   │   Bastion    │     │  │      │      │  │                         │  │
+│  │   │     Host     │     │  │      │      │  │                         │  │
+│  │   └──────────────┘     │  │      ▼      │  │                         │  │
+│  │           │            │  │  ┌─────────┐│  │                         │  │
+│  │           │            │  │  │Internal ││  │                         │  │
+│  │           │            │  │  │   LB    ││  │                         │  │
+│  │           │            │  │  └─────────┘│  │                         │  │
+│  │           │            │  │      │      │  │                         │  │
+│  │           ▼            │  └──────┼──────┘  │                         │  │
+│  │  ┌──────────────┐              │           │                         │  │
+│  │  │  Secure SSH  │              ▼           │                         │  │
+│  │  │    Access    │      ┌─────────────┐     │                         │  │
+│  │  └──────────────┘      │  Database   │     │                         │  │
+│  │                        │  Subnets    │     │                         │  │
+│  │                        │  (AZ1+AZ2)  │     │                         │  │
+│  │                        │             │     │                         │  │
+│  │                        │  ┌─────────┐│     │  ┌──────────────┐       │  │
+│  │                        │  │Postgres ││     │  │Private DNS   │       │  │
+│  │                        │  │ Primary ││◄────┼──┤    Zone      │       │  │
+│  │                        │  └─────────┘│     │  └──────────────┘       │  │
+│  │                        │      │      │     │                         │  │
+│  │                        │      ▼      │     │                         │  │
+│  │                        │  ┌─────────┐│     │                         │  │
+│  │                        │  │Postgres ││     │                         │  │
+│  │                        │  │ Replica ││     │                         │  │
+│  │                        │  └─────────┘│     │                         │  │
+│  │                        └─────────────┘     │                         │  │
+│  │                                            │                         │  │
+│  └────────────────────────────────────────────┘                         │  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Internet Users
+     │
+     │
+     ▼
+  Website
+```
+
+![3-Tier Architecture](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.compute/vm-simple-linux/images/three-tier-architecture.png)
+
+### Components
+
+1. **Frontend Tier:**
+   - Node.js application running in Docker containers
+   - VM Scale Set with auto-scaling
+   - Application Gateway with WAF for security
+   - Deployed in public subnets across 2 availability zones
+
+2. **Backend Tier:**
+   - Go application running in Docker containers
+   - VM Scale Set with auto-scaling
+   - Internal Load Balancer
+   - Deployed in private subnets across 2 availability zones
+
+3. **Database Tier:**
+   - Azure Database for PostgreSQL Flexible Server
+   - Primary server with read-write capability
+   - Read replica for read-only operations
+   - Deployed in database subnets across 2 availability zones
+
+4. **Supporting Infrastructure:**
+   - Azure Container Registry for Docker images
+   - Azure Key Vault for secrets management
+   - Azure Bastion for secure SSH access
+   - Private DNS Zones for name resolution
+   - Network Security Groups for each subnet
+
+## Prerequisites
+
+- Azure CLI installed and configured
+- Terraform v1.5.0 or later
+- Azure subscription and permissions to create resources
+- Docker installed locally for building and pushing container images
+
+## Project Structure
+
+```
+infra/
+├── main.tf                 # Root configuration file
+├── variables.tf            # Input variables for the root module
+├── outputs.tf              # Output values after deployment
+├── providers.tf            # Provider configurations
+├── backend.tf              # Remote state configuration
+├── modules/                # All modular components
+│   ├── networking/         # VNet, subnets, NSGs, Bastion
+│   ├── compute/            # VM Scale Sets and load balancers
+│   ├── database/           # PostgreSQL Flexible Server
+│   ├── dns/                # Private DNS Zones
+│   ├── keyvault/           # Azure Key Vault
+│   └── acr/                # Azure Container Registry
+└── environments/           # Environment-specific configurations
+    └── prod/               # Production environment
+```
+
+## Deployment Instructions
+
+### 1. Set up Terraform Backend
+
+Create an Azure Storage Account for storing Terraform state:
+
+```bash
+# Login to Azure
+az login
+
+# Create Resource Group for Terraform state
+az group create --name tfstate-rg --location eastus2
+
+# Create Storage Account
+az storage account create --name tfstate<unique_suffix> --resource-group tfstate-rg --sku Standard_LRS --encryption-services blob
+
+# Create Storage Container
+az storage container create --name tfstate --account-name tfstate<unique_suffix>
+```
+
+### 2. Initialize Terraform
+
+```bash
+cd infra
+terraform init \
+  -backend-config="resource_group_name=tfstate-rg" \
+  -backend-config="storage_account_name=tfstate<unique_suffix>" \
+  -backend-config="container_name=tfstate" \
+  -backend-config="key=prod.terraform.tfstate"
+```
+
+### 3. Multi-Stage Deployment Approach
+
+Due to interdependencies between infrastructure components (like ACR, Key Vault, and databases), we recommend following this structured deployment approach:
+
+#### Stage 1: Deploy Base Infrastructure
+
+First, deploy only the base infrastructure components without compute resources:
+
+```bash
+cd infra
+terraform apply -var-file="environments/prod/terraform.tfvars" -var="deploy_compute=false"
+```
+
+This creates:
+- Resource group and networking components
+- Azure Container Registry
+- Azure Key Vault
+- PostgreSQL database and replica
+- Private DNS zones
+
+#### Stage 2: Build and Push Docker Images 
+
+After the ACR is created, build and push your Docker images:
+
+```bash
+# Get ACR name from terraform output
+ACR_NAME=$(terraform output -raw acr_login_server | cut -d '.' -f 1)
+
+# Login to ACR
+az acr login --name $ACR_NAME
+
+# Build and tag your images (Run from the root of the project) 
+docker build -t ${ACR_NAME}.azurecr.io/frontend:latest ./frontend
+docker build -t ${ACR_NAME}.azurecr.io/backend:latest ./backend
+
+# Push to ACR
+docker push ${ACR_NAME}.azurecr.io/frontend:latest
+docker push ${ACR_NAME}.azurecr.io/backend:latest
+```
+
+#### Stage 3: Deploy Compute Resources (Run from infra directory)
+
+Now deploy the compute resources (VM Scale Sets):
+
+```bash
+terraform apply -var-file="environments/prod/terraform.tfvars" -var="deploy_compute=true"
+```
+
+This approach prevents dependency issues where compute resources might try to access resources that don't exist yet or aren't fully provisioned.
+
+### 4. Create Docker Images
+
+Build and push your Docker images to Azure Container Registry:
+
+```bash
+# After ACR is created, login to it
+az acr login --name <acr_name>
+
+# Build and tag your images
+docker build -t <acr_name>.azurecr.io/frontend:latest ./frontend
+docker build -t <acr_name>.azurecr.io/backend:latest ./backend
+
+# Push to ACR
+docker push <acr_name>.azurecr.io/frontend:latest
+docker push <acr_name>.azurecr.io/backend:latest
+```
+
+### 5. Access the Application
+
+After deployment completes, access your application:
+
+- Frontend: Use the Application Gateway public IP address:
+
+  ```bash
+  echo "Frontend URL: http://$(terraform output -raw frontend_public_ip)"
+  ```
+
+- Backend: Access via internal load balancer (from within the VNet):
+
+  ```bash
+  echo "Backend internal endpoint: http://$(terraform output -raw backend_internal_lb_ip):8080"
+  ```
+
+- Database: Access via private endpoints from the backend tier:
+
+  ```bash
+  echo "PostgreSQL Server: $(terraform output -raw postgres_server_fqdn)"
+  echo "PostgreSQL Replica: $(terraform output -raw postgres_replica_name)"
+  ```
+- SSH into the Bastion host to access the backend and  frontend upload it to bastion host connect:
+
+  ```bash
+  terraform output -raw frontend_ssh_private_key > frontend_key.pem
+  terraform output -raw backend_ssh_private_key > backend_key.pem 
+  ```
+
+## Infrastructure Management
+
+### Scaling
+
+The VM Scale Sets will automatically scale based on CPU usage. You can modify the scaling rules in the `compute` module.
+
+### Monitoring
+
+The deployment includes Azure Monitor integration. Configure alerts and dashboards in the Azure Portal.
+
+### Security
+
+- All subnets are protected with Network Security Groups
+- Application Gateway has WAF enabled
+- PostgreSQL is only accessible via private endpoints
+- Key Vault stores sensitive information
+- SSH access is only available via Bastion Host
+
+## Cleanup
+
+To destroy the infrastructure when no longer needed:
+
+```bash
+terraform destroy -auto-approve
+```
+
+## Contributing
+
+Please follow the standard Git workflow:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
