@@ -30,7 +30,7 @@ resource "azurerm_key_vault" "kv" {
     object_id = var.object_id
 
     key_permissions = [
-      "Get", "List", "Create", "Delete", "Update", "Recover", "Backup", "Restore","Purge"
+      "Get", "List", "Create", "Delete", "Update", "Recover", "Backup", "Restore", "Purge"
     ]
 
     secret_permissions = [
@@ -42,9 +42,22 @@ resource "azurerm_key_vault" "kv" {
     ]
   }
 
+  # Access policy for backend VM managed identity (if provided)
+  dynamic "access_policy" {
+    for_each = var.backend_identity_principal_id != null ? [1] : []
+    content {
+      tenant_id = var.tenant_id
+      object_id = var.backend_identity_principal_id
+
+      secret_permissions = [
+        "Get", "List"
+      ]
+    }
+  }
+
   # Network access configuration
   network_acls {
-    default_action = "Allow"  # Consider changing to "Deny" in production and explicitly allowing needed IPs/VNets
+    default_action = "Allow" # Consider changing to "Deny" in production and explicitly allowing needed IPs/VNets
     bypass         = "AzureServices"
   }
 }

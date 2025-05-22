@@ -26,7 +26,7 @@ data "template_file" "provisioning_script" {
 
   vars = var.is_frontend ? {
     # Frontend script variables
-    user_assigned_identity_id = var.user_assigned_identity_id
+    user_assigned_identity_id = azurerm_user_assigned_identity.vmss_identity.id
     dockerhub_username        = var.dockerhub_username
     dockerhub_password        = var.dockerhub_password
     application_port          = var.application_port
@@ -34,11 +34,12 @@ data "template_file" "provisioning_script" {
     backend_lb_ip             = var.backend_load_balancer_ip
     } : {
     # Backend script variables
-    user_assigned_identity_id = var.user_assigned_identity_id
+    user_assigned_identity_id = azurerm_user_assigned_identity.vmss_identity.id
     dockerhub_username        = var.dockerhub_username
     dockerhub_password        = var.dockerhub_password
     application_port          = var.application_port
     full_image_name           = local.full_image_name
+    key_vault_id              = var.key_vault_id
     db_host                   = var.database_connection.host
     db_port                   = var.database_connection.port
     db_username               = var.database_connection.username
@@ -187,6 +188,14 @@ resource "azurerm_lb_rule" "backend" {
   probe_id                       = azurerm_lb_probe.backend[0].id
 }
 
+# User-assigned Managed Identity for VM Scale Set
+resource "azurerm_user_assigned_identity" "vmss_identity" {
+  name                = "${var.resource_name_prefix}-${local.tier_name}-identity"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  tags                = var.tags
+}
+
 # VM Scale Set
 resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
   name                = "${var.resource_name_prefix}-${local.tier_name}-vmss"
@@ -199,6 +208,11 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
   upgrade_mode        = "Automatic"
   health_probe_id     = var.is_frontend ? null : azurerm_lb_probe.backend[0].id
   tags                = var.tags
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.vmss_identity.id]
+  }
 
   # Enable termination notification to allow graceful shutdown
   termination_notification {
@@ -260,22 +274,6 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
       subnet_id                                    = var.subnet_id
       load_balancer_backend_address_pool_ids       = var.is_frontend ? null : [azurerm_lb_backend_address_pool.backend[0].id]
       application_gateway_backend_address_pool_ids = var.is_frontend ? [for pool in azurerm_application_gateway.frontend[0].backend_address_pool : pool.id] : null
-    }
-  }
-
-  # Use user-assigned identity if provided, otherwise fall back to system-assigned
-  dynamic "identity" {
-    for_each = var.user_assigned_identity_id != null ? [1] : []
-    content {
-      type         = "UserAssigned"
-      identity_ids = [var.user_assigned_identity_id]
-    }
-  }
-
-  dynamic "identity" {
-    for_each = var.user_assigned_identity_id == null ? [1] : []
-    content {
-      type = "SystemAssigned"
     }
   }
 }

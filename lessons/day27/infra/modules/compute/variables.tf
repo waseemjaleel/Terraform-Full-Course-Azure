@@ -96,12 +96,6 @@ variable "database_connection" {
   sensitive = true
 }
 
-variable "user_assigned_identity_id" {
-  description = "ID of the user-assigned managed identity (if needed)"
-  type        = string
-  default     = null
-}
-
 variable "backend_load_balancer_ip" {
   description = "Private IP address of the backend load balancer (for frontend only)"
   type        = string

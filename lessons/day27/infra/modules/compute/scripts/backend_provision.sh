@@ -7,9 +7,23 @@ if [ "$(id -u)" -ne 0 ]; then
   exec sudo "$0" "$@"
 fi
 
+# Access template variables 
+# Note: these come from the template_file resource in main.tf
+db_username="${db_username}"
+db_password="${db_password}"
+db_host="${db_host}"
+db_port="${db_port}"
+db_name="${db_name}"
+db_sslmode="${db_sslmode}"
+application_port="${application_port}"
+full_image_name="${full_image_name}"
+dockerhub_username="${dockerhub_username}"
+dockerhub_password="${dockerhub_password}"
+key_vault_id="${key_vault_id}"
+
 # Install necessary packages
 apt-get update -y
-DEBIAN_FRONTEND=noninteractive apt-get install -y apt-transport-https ca-certificates curl software-properties-common dnsutils
+DEBIAN_FRONTEND=noninteractive apt-get install -y apt-transport-https ca-certificates curl software-properties-common dnsutils jq
 
 # Install Docker
 echo "Setting up Docker repository..."
@@ -43,9 +57,9 @@ else
 fi
 
 # Configure Docker Hub authentication if credentials are provided
-if [ -n "${dockerhub_username}" ] && [ -n "${dockerhub_password}" ]; then
+if [ -n "$dockerhub_username" ] && [ -n "$dockerhub_password" ]; then
   echo "Logging into Docker Hub using provided credentials..."
-  echo "${dockerhub_password}" | docker login -u "${dockerhub_username}" --password-stdin
+  echo "$dockerhub_password" | docker login -u "$dockerhub_username" --password-stdin
   if [ $? -ne 0 ]; then
     echo "Failed to perform Docker login to Docker Hub. Please check credentials and Docker setup."
     exit 1
@@ -56,17 +70,60 @@ else
 fi
 
 # Pull container image
-echo "Pulling Docker image: ${full_image_name}"
-docker pull "${full_image_name}"
+echo "Pulling Docker image: $full_image_name"
+docker pull "$full_image_name"
+
+# Get Key Vault name from the Key Vault ID
+KEY_VAULT_NAME=$(echo "$key_vault_id" | awk -F/ '{print $NF}')
+echo "Using Key Vault: $KEY_VAULT_NAME"
+
+# Explicitly login with Managed Identity
+echo "Logging in to Azure CLI using managed identity..."
+az login --identity --allow-no-subscriptions
+if [ $? -ne 0 ]; then
+  echo "Failed to login using managed identity. Retrying with more information..."
+  # Get the managed identity's client ID to use for explicit login
+  IDENTITY_ENDPOINT=$(curl -s -H Metadata:true --noproxy "*" "http://169.254.169.254/metadata/identity/info?api-version=2018-02-01" | jq -r '.clientId')
+  if [ -n "$IDENTITY_ENDPOINT" ]; then
+    echo "Using client ID: $IDENTITY_ENDPOINT for login"
+    az login --identity --username "$IDENTITY_ENDPOINT" --allow-no-subscriptions
+  else
+    echo "Could not determine managed identity client ID. Using default managed identity."
+    az login --identity --allow-no-subscriptions
+  fi
+fi
+
+# Get secrets from Key Vault using Managed Identity
+echo "Retrieving database credentials from Key Vault using Managed Identity..."
+DB_USERNAME=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "db-username" --query "value" -o tsv)
+DB_PASSWORD=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "db-password" --query "value" -o tsv)
+DB_HOST=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "db-host" --query "value" -o tsv)
+DB_NAME=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "db-name" --query "value" -o tsv)
+
+# Check if secrets were retrieved successfully
+if [ -z "$DB_USERNAME" ] || [ -z "$DB_PASSWORD" ] || [ -z "$DB_HOST" ] || [ -z "$DB_NAME" ]; then
+  echo "Failed to retrieve all required secrets from Key Vault. Using template values as fallback."
+  DB_USERNAME="$db_username"
+  DB_PASSWORD="$db_password"
+  DB_HOST="$db_host"
+  DB_NAME="$db_name"
+  echo "Using fallback values for database connection."
+else
+  echo "Successfully retrieved all database secrets from Key Vault."
+fi
+
+# Ensure DB_PORT and SSL_MODE are set (default values if not in Key Vault)
+DB_PORT="$db_port"
+SSL_MODE="$db_sslmode"
 
 # Ensure DNS resolution is working before trying to connect to the database
-echo "Checking DNS resolution for database host: ${db_host}"
+echo "Checking DNS resolution for database host: $DB_HOST"
 max_attempts=20
 attempt=1
 while [ $attempt -le $max_attempts ]; do
   echo "DNS resolution attempt $attempt of $max_attempts..."
-  if nslookup "${db_host}" > /dev/null 2>&1; then
-    echo "Successfully resolved database host: ${db_host}"
+  if nslookup "$DB_HOST" > /dev/null 2>&1; then
+    echo "Successfully resolved database host: $DB_HOST"
     break
   else
     echo "Failed to resolve database host. Waiting 15 seconds before retry..."
@@ -81,16 +138,16 @@ fi
 
 # Backend container needs DB environment variables
 echo "Running Docker container..."
-docker run -d -p "${application_port}:${application_port}" \
-  -e DB_USERNAME="${db_username}" \
-  -e DB_PASSWORD="${db_password}" \
-  -e DB_HOST="${db_host}" \
-  -e DB_PORT="${db_port}" \
-  -e DB_NAME="${db_name}" \
-  -e SSL="${db_sslmode}" \
-  -e PORT="${application_port}" \
+docker run -d -p "$application_port:$application_port" \
+  -e DB_USERNAME="$DB_USERNAME" \
+  -e DB_PASSWORD="$DB_PASSWORD" \
+  -e DB_HOST="$DB_HOST" \
+  -e DB_PORT="$DB_PORT" \
+  -e DB_NAME="$DB_NAME" \
+  -e SSL="$SSL_MODE" \
+  -e PORT="$application_port" \
   --restart always \
-  "${full_image_name}"
+  "$full_image_name"
 
 # Log the completion
 echo "Backend provisioning completed at $(date)" >> /var/log/provision.log

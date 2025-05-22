@@ -147,9 +147,8 @@ module "frontend" {
   health_probe_path    = "/"
   key_vault_id         = module.keyvault.key_vault_id
   # Pass the backend load balancer IP if the backend module has been created
-  backend_load_balancer_ip  = var.deploy_compute ? module.backend[0].load_balancer_private_ip : null
-  user_assigned_identity_id = null
-  tags                      = local.common_tags
+  backend_load_balancer_ip = var.deploy_compute ? module.backend[0].load_balancer_private_ip : null
+  tags                     = local.common_tags
 
   depends_on = [
     module.keyvault,
@@ -163,22 +162,21 @@ module "backend" {
   count  = var.deploy_compute ? 1 : 0
   source = "./modules/compute"
 
-  resource_group_name       = azurerm_resource_group.main.name
-  location                  = var.location
-  resource_name_prefix      = local.resource_name_prefix
-  subnet_id                 = module.networking.private_subnet_ids[0]
-  vm_size                   = var.backend_vm_size
-  instance_count            = var.backend_instances
-  admin_username            = var.admin_username
-  dockerhub_username        = var.dockerhub_username
-  dockerhub_password        = var.dockerhub_password
-  docker_image              = var.backend_image
-  is_frontend               = false
-  application_port          = 8080
-  health_probe_path         = "/health"
-  key_vault_id              = module.keyvault.key_vault_id
-  user_assigned_identity_id = null
-  tags                      = local.common_tags
+  resource_group_name  = azurerm_resource_group.main.name
+  location             = var.location
+  resource_name_prefix = local.resource_name_prefix
+  subnet_id            = module.networking.private_subnet_ids[0]
+  vm_size              = var.backend_vm_size
+  instance_count       = var.backend_instances
+  admin_username       = var.admin_username
+  dockerhub_username   = var.dockerhub_username
+  dockerhub_password   = var.dockerhub_password
+  docker_image         = var.backend_image
+  is_frontend          = false
+  application_port     = 8080
+  health_probe_path    = "/health"
+  key_vault_id         = module.keyvault.key_vault_id
+  tags                 = local.common_tags
 
   database_connection = {
     host     = module.database.server_fqdn
@@ -192,6 +190,23 @@ module "backend" {
   depends_on = [
     module.keyvault,
     module.database
+  ]
+}
+
+# Update Key Vault with backend identity
+resource "azurerm_key_vault_access_policy" "backend_policy" {
+  count        = var.deploy_compute ? 1 : 0
+  key_vault_id = module.keyvault.key_vault_id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = module.backend[0].identity_principal_id
+
+  secret_permissions = [
+    "Get", "List"
+  ]
+
+  depends_on = [
+    module.keyvault,
+    module.backend
   ]
 }
 

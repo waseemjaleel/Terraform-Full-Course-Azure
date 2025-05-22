@@ -27,3 +27,9 @@ variable "object_id" {
   description = "The object ID of the current user/service principal"
   type        = string
 }
+
+variable "backend_identity_principal_id" {
+  description = "Principal ID of the backend managed identity"
+  type        = string
+  default     = null
+}
