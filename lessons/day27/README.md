@@ -130,8 +130,8 @@ This Terraform project deploys a secure and scalable 3-tier application infrastr
    - Deployed in database subnets across 2 availability zones
 
 4. **Supporting Infrastructure:**
-   - Azure Container Registry for Docker images
-   - Azure Key Vault for secrets management
+   - Docker Hub for container images
+   - Azure Key Vault for secrets management (including Docker Hub credentials)
    - Azure Bastion for secure SSH access
    - Private DNS Zones for name resolution
    - Network Security Groups for each subnet
@@ -157,8 +157,7 @@ infra/
 │   ├── compute/            # VM Scale Sets and load balancers
 │   ├── database/           # PostgreSQL Flexible Server
 │   ├── dns/                # Private DNS Zones
-│   ├── keyvault/           # Azure Key Vault
-│   └── acr/                # Azure Container Registry
+│   └── keyvault/           # Azure Key Vault
 └── environments/           # Environment-specific configurations
     └── prod/               # Production environment
 ```
@@ -194,77 +193,42 @@ terraform init \
   -backend-config="key=prod.terraform.tfstate"
 ```
 
-### 3. Multi-Stage Deployment Approach
+### 3. One-Step Deployment Approach
 
-Due to interdependencies between infrastructure components (like ACR, Key Vault, and databases), we recommend following this structured deployment approach:
+Since we're now using Docker Hub instead of Azure Container Registry, we can deploy the entire infrastructure in one step. First, make sure your Docker images are pushed to Docker Hub:
 
-#### Stage 1: Deploy Base Infrastructure
+```bash
+# Log in to Docker Hub
+docker login -u YOUR_DOCKERHUB_USERNAME
 
-First, deploy only the base infrastructure components without compute resources:
+# Build and tag your images (Run from the root of the project)
+docker build -t YOUR_DOCKERHUB_USERNAME/frontend:latest ./frontend
+docker build -t YOUR_DOCKERHUB_USERNAME/backend:latest ./backend
+
+# Push to Docker Hub
+docker push YOUR_DOCKERHUB_USERNAME/frontend:latest
+docker push YOUR_DOCKERHUB_USERNAME/backend:latest
+```
+
+After pushing your images to Docker Hub, deploy the infrastructure with your Docker Hub credentials:
 
 ```bash
 cd infra
-terraform apply -var-file="environments/prod/terraform.tfvars" -var="deploy_compute=false"
+terraform apply \
+  -var-file="environments/prod/terraform.tfvars" \
+  -var="dockerhub_username=YOUR_DOCKERHUB_USERNAME" \
+  -var="dockerhub_password=YOUR_DOCKERHUB_PAT" \
+  -var="frontend_image=YOUR_DOCKERHUB_USERNAME/frontend:latest" \
+  -var="backend_image=YOUR_DOCKERHUB_USERNAME/backend:latest"
 ```
 
-*If you get an error about server busy, just rerun the above command.*
+This command will:
+- Deploy all infrastructure components including compute resources
+- Store your Docker Hub Personal Access Token securely in Azure Key Vault
+- Configure the VM Scale Sets to pull images from Docker Hub
+- Use the specified Docker images for frontend and backend deployments
 
-This creates:
-- Resource group and networking components
-- Azure Container Registry
-- Azure Key Vault
-- PostgreSQL database and replica
-- Private DNS zones
-- Private DNS zones
-
-#### Stage 2: Build and Push Docker Images 
-
-After the ACR is created, build and push your Docker images:
-
-```bash
-# Get ACR name from terraform output
-ACR_NAME=$(terraform output -raw acr_login_server | cut -d '.' -f 1)
-
-# Login to ACR
-az acr login --name $ACR_NAME
-
-# Build and tag your images (Run from the root of the project) 
-docker build -t ${ACR_NAME}.azurecr.io/frontend:latest ./frontend
-docker build -t ${ACR_NAME}.azurecr.io/backend:latest ./backend
-
-# Push to ACR
-docker push ${ACR_NAME}.azurecr.io/frontend:latest
-docker push ${ACR_NAME}.azurecr.io/backend:latest
-```
-
-#### Stage 3: Deploy Compute Resources (Run from infra directory)
-
-Now deploy the compute resources (VM Scale Sets):
-
-```bash
-terraform apply -var-file="environments/prod/terraform.tfvars" -var="deploy_compute=true"
-```
-
-This approach prevents dependency issues where compute resources might try to access resources that don't exist yet or aren't fully provisioned.
-
-### 4. Create Docker Images
-
-Build and push your Docker images to Azure Container Registry:
-
-```bash
-# After ACR is created, login to it
-az acr login --name <acr_name>
-
-# Build and tag your images
-docker build -t <acr_name>.azurecr.io/frontend:latest ./frontend
-docker build -t <acr_name>.azurecr.io/backend:latest ./backend
-
-# Push to ACR
-docker push <acr_name>.azurecr.io/frontend:latest
-docker push <acr_name>.azurecr.io/backend:latest
-```
-
-### 5. Access the Application
+### 4. Access the Application
 
 After deployment completes, access your application:
 
@@ -286,7 +250,7 @@ After deployment completes, access your application:
   echo "PostgreSQL Server: $(terraform output -raw postgres_server_fqdn)"
   echo "PostgreSQL Replica: $(terraform output -raw postgres_replica_name)"
   ```
-- SSH into the Bastion host to access the backend and  frontend upload it to bastion host connect:
+- SSH into the Bastion host to access the backend and frontend:
 
   ```bash
   terraform output -raw frontend_ssh_private_key > frontend_key.pem
@@ -308,7 +272,7 @@ The deployment includes Azure Monitor integration. Configure alerts and dashboar
 - All subnets are protected with Network Security Groups
 - Application Gateway has WAF enabled
 - PostgreSQL is only accessible via private endpoints
-- Key Vault stores sensitive information
+- Key Vault stores sensitive information (including Docker Hub credentials)
 - SSH access is only available via Bastion Host
 
 ## Cleanup
