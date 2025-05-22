@@ -121,15 +121,29 @@ variable "postgres_db_name" {
   default     = "goapp"
 }
 
+# Docker Hub variables
+variable "dockerhub_username" {
+  description = "Docker Hub username for private image access"
+  type        = string
+  default     = ""
+}
+
+variable "dockerhub_password" {
+  description = "Docker Hub password or Personal Access Token (PAT)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 # Docker image variables
 variable "frontend_image" {
-  description = "Frontend Docker image name"
+  description = "Frontend Docker image name including registry path (e.g., 'username/frontend:latest')"
   type        = string
   default     = "frontend:latest"
 }
 
 variable "backend_image" {
-  description = "Backend Docker image name"
+  description = "Backend Docker image name including registry path (e.g., 'username/backend:latest')"
   type        = string
   default     = "backend:latest"
 }

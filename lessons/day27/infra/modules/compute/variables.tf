@@ -39,24 +39,21 @@ variable "admin_username" {
   type        = string
 }
 
-variable "acr_login_server" {
-  description = "Login server URL for Azure Container Registry"
+variable "dockerhub_username" {
+  description = "Docker Hub username for image access"
   type        = string
+  default     = ""
 }
 
-variable "acr_admin_username" {
-  description = "Admin username for Azure Container Registry"
-  type        = string
-}
-
-variable "acr_admin_password" {
-  description = "Admin password for Azure Container Registry"
+variable "dockerhub_password" {
+  description = "Docker Hub password or Personal Access Token"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "docker_image" {
-  description = "Docker image name"
+  description = "Full Docker image name (e.g. 'username/image:tag')"
   type        = string
 }
 
@@ -100,7 +97,7 @@ variable "database_connection" {
 }
 
 variable "user_assigned_identity_id" {
-  description = "ID of the user-assigned managed identity to use for ACR authentication"
+  description = "ID of the user-assigned managed identity (if needed)"
   type        = string
   default     = null
 }

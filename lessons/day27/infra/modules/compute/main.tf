@@ -12,8 +12,8 @@ locals {
   tier_name     = var.is_frontend ? "frontend" : "backend"
   tier_priority = var.is_frontend ? 100 : 200
 
-  # Full image name with ACR login server
-  full_image_name = "${var.acr_login_server}/${var.docker_image}"
+  # Full image name (Docker Hub)
+  full_image_name = var.docker_image
 
   # Path to provisioning scripts
   frontend_script_path = "${path.module}/scripts/frontend_provision.sh"
@@ -27,18 +27,16 @@ data "template_file" "provisioning_script" {
   vars = var.is_frontend ? {
     # Frontend script variables
     user_assigned_identity_id = var.user_assigned_identity_id
-    acr_name                  = split(".", var.acr_login_server)[0]
-    acr_admin_username        = var.acr_admin_username
-    acr_admin_password        = var.acr_admin_password
+    dockerhub_username        = var.dockerhub_username
+    dockerhub_password        = var.dockerhub_password
     application_port          = var.application_port
     full_image_name           = local.full_image_name
     backend_lb_ip             = var.backend_load_balancer_ip
     } : {
     # Backend script variables
     user_assigned_identity_id = var.user_assigned_identity_id
-    acr_name                  = split(".", var.acr_login_server)[0]
-    acr_admin_username        = var.acr_admin_username
-    acr_admin_password        = var.acr_admin_password
+    dockerhub_username        = var.dockerhub_username
+    dockerhub_password        = var.dockerhub_password
     application_port          = var.application_port
     full_image_name           = local.full_image_name
     db_host                   = var.database_connection.host

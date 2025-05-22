@@ -70,17 +70,6 @@ output "key_vault_uri" {
   value       = module.keyvault.key_vault_uri
 }
 
-output "acr_login_server" {
-  description = "The login server URL for the Azure Container Registry"
-  value       = module.acr.login_server
-}
-
-output "acr_admin_username" {
-  description = "The admin username of the Azure Container Registry"
-  value       = module.acr.admin_username
-  sensitive   = true
-}
-
 output "private_dns_zone_name" {
   description = "The name of the private DNS zone"
   value       = module.dns.private_dns_zone_name

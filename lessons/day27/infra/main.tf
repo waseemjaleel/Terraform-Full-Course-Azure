@@ -19,24 +19,6 @@ resource "azurerm_resource_group" "main" {
   tags     = local.common_tags
 }
 
-# Create user-assigned managed identities first
-# Commenting out managed identities as they are not needed when using ACR username/password auth
-# resource "azurerm_user_assigned_identity" "frontend" {
-#   count               = var.deploy_compute ? 1 : 0
-#   resource_group_name = azurerm_resource_group.main.name
-#   location            = var.location
-#   name                = "${local.resource_name_prefix}-frontend-identity"
-#   tags                = local.common_tags
-# }
-
-# resource "azurerm_user_assigned_identity" "backend" {
-#   count               = var.deploy_compute ? 1 : 0
-#   resource_group_name = azurerm_resource_group.main.name
-#   location            = var.location
-#   name                = "${local.resource_name_prefix}-backend-identity"
-#   tags                = local.common_tags
-# }
-
 # Networking Module
 module "networking" {
   source = "./modules/networking"
@@ -52,37 +34,6 @@ module "networking" {
   appgw_subnet_prefix      = var.appgw_subnet_prefix
   tags                     = local.common_tags
 }
-
-# Azure Container Registry
-module "acr" {
-  source = "./modules/acr"
-
-  resource_group_name      = azurerm_resource_group.main.name
-  location                 = var.location
-  resource_name_prefix     = local.resource_name_prefix
-  georeplication_locations = [var.secondary_location] # Added for geo-replication
-  tags                     = local.common_tags
-}
-
-# Assign AcrPull role to identities before VMSS creation
-# Commenting out as we're using ACR admin username/password authentication
-# resource "azurerm_role_assignment" "frontend_identity_acrpull" {
-#   count                = var.deploy_compute ? 1 : 0
-#   scope                = module.acr.acr_id
-#   role_definition_name = "AcrPull"
-#   principal_id         = azurerm_user_assigned_identity.frontend[0].principal_id
-#
-#   depends_on = [azurerm_user_assigned_identity.frontend, module.acr]
-# }
-#
-# resource "azurerm_role_assignment" "backend_identity_acrpull" {
-#   count                = var.deploy_compute ? 1 : 0
-#   scope                = module.acr.acr_id
-#   role_definition_name = "AcrPull"
-#   principal_id         = azurerm_user_assigned_identity.backend[0].principal_id
-#
-#   depends_on = [azurerm_user_assigned_identity.backend, module.acr]
-# }
 
 # Key Vault
 module "keyvault" {
@@ -131,6 +82,23 @@ resource "azurerm_key_vault_secret" "db_name" {
   depends_on = [module.keyvault]
 }
 
+# Store Docker Hub credentials in Key Vault
+resource "azurerm_key_vault_secret" "dockerhub_username" {
+  name         = "dockerhub-username"
+  value        = var.dockerhub_username
+  key_vault_id = module.keyvault.key_vault_id
+
+  depends_on = [module.keyvault]
+}
+
+resource "azurerm_key_vault_secret" "dockerhub_pat" {
+  name         = "dockerhub-pat"
+  value        = var.dockerhub_password
+  key_vault_id = module.keyvault.key_vault_id
+
+  depends_on = [module.keyvault]
+}
+
 # Database
 module "database" {
   source = "./modules/database"
@@ -171,22 +139,19 @@ module "frontend" {
   vm_size              = var.frontend_vm_size
   instance_count       = var.frontend_instances
   admin_username       = var.admin_username
-  acr_login_server     = module.acr.login_server
-  acr_admin_username   = module.acr.admin_username
-  acr_admin_password   = module.acr.admin_password
+  dockerhub_username   = var.dockerhub_username
+  dockerhub_password   = var.dockerhub_password
   docker_image         = var.frontend_image
   is_frontend          = true
   application_port     = 3000
   health_probe_path    = "/"
   key_vault_id         = module.keyvault.key_vault_id
   # Pass the backend load balancer IP if the backend module has been created
-  backend_load_balancer_ip = var.deploy_compute ? module.backend[0].load_balancer_private_ip : null
-  # No longer using managed identities for ACR auth - pass null instead
+  backend_load_balancer_ip  = var.deploy_compute ? module.backend[0].load_balancer_private_ip : null
   user_assigned_identity_id = null
   tags                      = local.common_tags
 
   depends_on = [
-    module.acr,
     module.keyvault,
     # We can't use conditionals in depends_on, so we'll rely on the backend module's count to handle this dependency
     module.backend
@@ -198,22 +163,20 @@ module "backend" {
   count  = var.deploy_compute ? 1 : 0
   source = "./modules/compute"
 
-  resource_group_name  = azurerm_resource_group.main.name
-  location             = var.location
-  resource_name_prefix = local.resource_name_prefix
-  subnet_id            = module.networking.private_subnet_ids[0]
-  vm_size              = var.backend_vm_size
-  instance_count       = var.backend_instances
-  admin_username       = var.admin_username
-  acr_login_server     = module.acr.login_server
-  acr_admin_username   = module.acr.admin_username
-  acr_admin_password   = module.acr.admin_password
-  docker_image         = var.backend_image
-  is_frontend          = false
-  application_port     = 8080
-  health_probe_path    = "/health"
-  key_vault_id         = module.keyvault.key_vault_id
-  # No longer using managed identities for ACR auth - pass null instead
+  resource_group_name       = azurerm_resource_group.main.name
+  location                  = var.location
+  resource_name_prefix      = local.resource_name_prefix
+  subnet_id                 = module.networking.private_subnet_ids[0]
+  vm_size                   = var.backend_vm_size
+  instance_count            = var.backend_instances
+  admin_username            = var.admin_username
+  dockerhub_username        = var.dockerhub_username
+  dockerhub_password        = var.dockerhub_password
+  docker_image              = var.backend_image
+  is_frontend               = false
+  application_port          = 8080
+  health_probe_path         = "/health"
+  key_vault_id              = module.keyvault.key_vault_id
   user_assigned_identity_id = null
   tags                      = local.common_tags
 
@@ -227,10 +190,8 @@ module "backend" {
   }
 
   depends_on = [
-    module.acr,
     module.keyvault,
     module.database
-    # Removed dependency on azurerm_role_assignment.backend_identity_acrpull as we're using admin auth
   ]
 }
 
@@ -251,26 +212,6 @@ module "backend" {
 #   tags                        = local.common_tags
 
 #   depends_on = [module.frontend, module.backend]
-# }
-
-# DUPLICATE RESOURCES - COMMENTED OUT TO RESOLVE 409 CONFLICT
-# These role assignments are already created by frontend_identity_acrpull and backend_identity_acrpull above
-# Role Assignment - Frontend VMSS gets AcrPull role on ACR
-# resource "azurerm_role_assignment" "frontend_acrpull" {
-#   count                = var.deploy_compute ? 1 : 0
-#   scope                = module.acr.acr_id
-#   role_definition_name = "AcrPull"
-#   principal_id         = azurerm_user_assigned_identity.frontend[0].principal_id
-#   depends_on = [module.frontend, module.acr]
-# }
-
-# Role Assignment - Backend VMSS gets AcrPull role on ACR
-# resource "azurerm_role_assignment" "backend_acrpull" {
-#   count                = var.deploy_compute ? 1 : 0
-#   scope                = module.acr.acr_id
-#   role_definition_name = "AcrPull"
-#   principal_id         = azurerm_user_assigned_identity.backend[0].principal_id
-#   depends_on = [module.backend, module.acr]
 # }
 
 # Key Vault Access Policy for Frontend VMSS

@@ -42,14 +42,18 @@ else
   echo "Warning: Failed to add 'adminuser' to the docker group. Docker commands may require sudo for this user in interactive shells."
 fi
 
-# Configure docker to use ACR Admin User credentials for authentication
-echo "Logging into ACR (${acr_name}.azurecr.io) using admin user credentials..."
-echo "${acr_admin_password}" | docker login "${acr_name}.azurecr.io" -u "${acr_admin_username}" --password-stdin
-if [ $? -ne 0 ]; then
-  echo "Failed to perform Docker login to ACR. Please check ACR credentials and Docker setup."
-  exit 1
+# Configure Docker Hub authentication if credentials are provided
+if [ -n "${dockerhub_username}" ] && [ -n "${dockerhub_password}" ]; then
+  echo "Logging into Docker Hub using provided credentials..."
+  echo "${dockerhub_password}" | docker login -u "${dockerhub_username}" --password-stdin
+  if [ $? -ne 0 ]; then
+    echo "Failed to perform Docker login to Docker Hub. Please check credentials and Docker setup."
+    exit 1
+  fi
+  echo "Successfully logged into Docker Hub."
+else
+  echo "No Docker Hub credentials provided, assuming public image or pre-authenticated environment."
 fi
-echo "Successfully logged into ACR."
 
 # Pull container image
 echo "Pulling Docker image: ${full_image_name}"
