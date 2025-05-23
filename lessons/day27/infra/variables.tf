@@ -121,6 +121,22 @@ variable "postgres_db_name" {
   default     = "goapp"
 }
 
+variable "postgres_db_port" {
+  description = "Port for PostgreSQL database connection"
+  type        = number
+  default     = 5432
+}
+
+variable "postgres_db_sslmode" {
+  description = "SSL mode for PostgreSQL database connection"
+  type        = string
+  default     = "require"
+  validation {
+    condition     = contains(["disable", "allow", "prefer", "require", "verify-ca", "verify-full"], var.postgres_db_sslmode)
+    error_message = "Allowed values are: disable, allow, prefer, require, verify-ca, verify-full"
+  }
+}
+
 # Docker Hub variables
 variable "dockerhub_username" {
   description = "Docker Hub username for private image access"

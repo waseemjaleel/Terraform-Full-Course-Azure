@@ -9,12 +9,6 @@ fi
 
 # Access template variables 
 # Note: these come from the template_file resource in main.tf
-db_username="${db_username}"
-db_password="${db_password}"
-db_host="${db_host}"
-db_port="${db_port}"
-db_name="${db_name}"
-db_sslmode="${db_sslmode}"
 application_port="${application_port}"
 full_image_name="${full_image_name}"
 dockerhub_username="${dockerhub_username}"
@@ -99,22 +93,23 @@ DB_USERNAME=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "db-
 DB_PASSWORD=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "db-password" --query "value" -o tsv)
 DB_HOST=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "db-host" --query "value" -o tsv)
 DB_NAME=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "db-name" --query "value" -o tsv)
+DB_PORT=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "db-port" --query "value" -o tsv)
+SSL_MODE=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "db-sslmode" --query "value" -o tsv)
 
-# Check if secrets were retrieved successfully
-if [ -z "$DB_USERNAME" ] || [ -z "$DB_PASSWORD" ] || [ -z "$DB_HOST" ] || [ -z "$DB_NAME" ]; then
-  echo "Failed to retrieve all required secrets from Key Vault. Using template values as fallback."
-  DB_USERNAME="$db_username"
-  DB_PASSWORD="$db_password"
-  DB_HOST="$db_host"
-  DB_NAME="$db_name"
-  echo "Using fallback values for database connection."
-else
-  echo "Successfully retrieved all database secrets from Key Vault."
+# Verify all required secrets were retrieved
+if [ -z "$DB_USERNAME" ] || [ -z "$DB_PASSWORD" ] || [ -z "$DB_HOST" ] || [ -z "$DB_NAME" ] || [ -z "$DB_PORT" ] || [ -z "$SSL_MODE" ]; then
+  echo "ERROR: Failed to retrieve all required database secrets from Key Vault. Provisioning cannot continue."
+  echo "Missing secrets:"
+  [ -z "$DB_USERNAME" ] && echo "- db-username"
+  [ -z "$DB_PASSWORD" ] && echo "- db-password"
+  [ -z "$DB_HOST" ] && echo "- db-host"
+  [ -z "$DB_NAME" ] && echo "- db-name"
+  [ -z "$DB_PORT" ] && echo "- db-port"
+  [ -z "$SSL_MODE" ] && echo "- db-sslmode"
+  exit 1
 fi
 
-# Ensure DB_PORT and SSL_MODE are set (default values if not in Key Vault)
-DB_PORT="$db_port"
-SSL_MODE="$db_sslmode"
+echo "Successfully retrieved all database configuration from Key Vault."
 
 # Ensure DNS resolution is working before trying to connect to the database
 echo "Checking DNS resolution for database host: $DB_HOST"

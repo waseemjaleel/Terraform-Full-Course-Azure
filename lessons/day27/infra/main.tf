@@ -82,6 +82,23 @@ resource "azurerm_key_vault_secret" "db_name" {
   depends_on = [module.keyvault]
 }
 
+# Add DB port and SSL mode to Key Vault
+resource "azurerm_key_vault_secret" "db_port" {
+  name         = "db-port"
+  value        = tostring(var.postgres_db_port)
+  key_vault_id = module.keyvault.key_vault_id
+
+  depends_on = [module.keyvault]
+}
+
+resource "azurerm_key_vault_secret" "db_sslmode" {
+  name         = "db-sslmode"
+  value        = var.postgres_db_sslmode
+  key_vault_id = module.keyvault.key_vault_id
+
+  depends_on = [module.keyvault]
+}
+
 # Store Docker Hub credentials in Key Vault
 resource "azurerm_key_vault_secret" "dockerhub_username" {
   name         = "dockerhub-username"
@@ -180,11 +197,11 @@ module "backend" {
 
   database_connection = {
     host     = module.database.server_fqdn
-    port     = 5432
+    port     = var.postgres_db_port
     username = module.database.administrator_login
     password = module.database.administrator_password
     dbname   = var.postgres_db_name
-    sslmode  = "require"
+    sslmode  = var.postgres_db_sslmode
   }
 
   depends_on = [

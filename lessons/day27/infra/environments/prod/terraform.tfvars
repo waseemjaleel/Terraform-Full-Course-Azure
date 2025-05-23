@@ -26,6 +26,8 @@ postgres_sku_name   = "GP_Standard_D2s_v3"
 postgres_version    = "14"
 postgres_storage_mb = 32768
 postgres_db_name    = "goalsdb"
+postgres_db_port    = 5432
+postgres_db_sslmode = "require"
 
 # Docker image settings
 frontend_image = "frontend:latest"
