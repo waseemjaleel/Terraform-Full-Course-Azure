@@ -40,7 +40,12 @@ data "template_file" "provisioning_script" {
     application_port          = var.application_port
     full_image_name           = local.full_image_name
     key_vault_id              = var.key_vault_id
-    # No need to pass database variables - they'll be retrieved from Key Vault
+    db_host                   = var.database_connection.host
+    db_port                   = var.database_connection.port
+    db_username               = var.database_connection.username
+    db_password               = var.database_connection.password
+    db_name                   = var.database_connection.dbname
+    db_sslmode                = var.database_connection.sslmode
   }
 }
 
